@@ -1,0 +1,237 @@
+################################################################################
+#
+# File:   xc2s200fg456_32_33.ucf (PCI edge: left CLK edge: up)
+# Rev:    3.0.0
+#
+# Use this file only with the device listed below.  Any
+# other combination is invalid.  Do not modify this file
+# except in regions designated for "user" constraints.
+# This file is valid only with the default input delay
+# buffer settings as described in the implementation guide.
+#
+# Copyright (c) 2003 Xilinx, Inc.  All rights reserved.
+#
+# The UCF file information provided by Xilinx is provided
+# solely for your convenience.  Xilinx makes no warranties,
+# and accepts no liability, with respect to such information
+# or its use, and any use thereof is solely at the risk of
+# the user.  In addition, Xilinx does not assume any liability
+# arising out of such use; nor does it convey any license under
+# its patents, copyrights, maskwork, or any rights of others.
+#
+################################################################################
+# Define Device, Package, And Speed Grade
+################################################################################
+#
+CONFIG PART = XC2S200-FG456-6 ;
+#
+################################################################################
+# Avoid Configuration Pins
+################################################################################
+#
+CONFIG PROHIBIT = "A20" ;	#IO_WRITE
+CONFIG PROHIBIT = "C19" ;	#IO_CS
+CONFIG PROHIBIT = "C21" ;	#IO_DOUT_BUSY
+CONFIG PROHIBIT = "D20" ;	#IO_DIN_D0
+CONFIG PROHIBIT = "H22" ;	#IO_D1
+CONFIG PROHIBIT = "H20" ;	#IO_D2
+CONFIG PROHIBIT = "K20" ;	#IO_D3
+CONFIG PROHIBIT = "N22" ;	#IO_D4
+CONFIG PROHIBIT = "R21" ;	#IO_D5
+CONFIG PROHIBIT = "T22" ;	#IO_D6
+CONFIG PROHIBIT = "Y21" ;	#IO_D7
+CONFIG PROHIBIT = "V19" ;	#IO_INIT
+#
+################################################################################
+# I/O Assignment
+################################################################################
+#
+NET  "PCLK"                        LOC = "C11"  ;
+NET  "RST_I"                       LOC = "E2"   ;
+NET  "AD_IO<31>"                   LOC = "E1"   ;
+NET  "AD_IO<30>"                   LOC = "G4"   ;
+NET  "AD_IO<29>"                   LOC = "G3"   ;
+NET  "AD_IO<28>"                   LOC = "H5"   ;
+NET  "AD_IO<27>"                   LOC = "F2"   ;
+NET  "AD_IO<26>"                   LOC = "F1"   ;
+NET  "AD_IO<25>"                   LOC = "H4"   ;
+NET  "AD_IO<24>"                   LOC = "G1"   ;
+NET  "AD_IO<23>"                   LOC = "H3"   ;
+NET  "AD_IO<22>"                   LOC = "H2"   ;
+NET  "AD_IO<21>"                   LOC = "J4"   ;
+NET  "AD_IO<20>"                   LOC = "H1"   ;
+NET  "AD_IO<19>"                   LOC = "J5"   ;
+NET  "AD_IO<18>"                   LOC = "J2"   ;
+NET  "AD_IO<17>"                   LOC = "J3"   ;
+NET  "AD_IO<16>"                   LOC = "J1"   ;
+NET  "AD_IO<15>"                   LOC = "K5"   ;
+NET  "AD_IO<14>"                   LOC = "K1"   ;
+NET  "AD_IO<13>"                   LOC = "K3"   ;
+NET  "AD_IO<12>"                   LOC = "K4"   ;
+NET  "REQ_O"                       LOC = "K2"   ;
+NET  "IDSEL_I"                     LOC = "L6"   ;
+NET  "DEVSEL_IO"                   LOC = "L1"   ;
+NET  "GNT_I"                       LOC = "L5"   ;
+NET  "STOP_IO"                     LOC = "L4"   ;
+NET  "IRDY_IO"                     LOC = "L3"   ;
+NET  "TRDY_IO"                     LOC = "M1"   ;
+NET  "FRAME_IO"                    LOC = "M6"   ;
+NET  "INTA_O"                      LOC = "M3"   ;
+NET  "SERR_IO"                     LOC = "M4"   ;
+NET  "CBE_IO<3>"                   LOC = "N2"   ;
+NET  "CBE_IO<2>"                   LOC = "N3"   ;
+NET  "CBE_IO<1>"                   LOC = "N4"   ;
+NET  "CBE_IO<0>"                   LOC = "P1"   ;
+NET  "PERR_IO"                     LOC = "N5"   ;
+NET  "PAR_IO"                      LOC = "P2"   ;
+NET  "AD_IO<11>"                   LOC = "P4"   ;
+NET  "AD_IO<10>"                   LOC = "R1"   ;
+NET  "AD_IO<9>"                    LOC = "P5"   ;
+NET  "AD_IO<8>"                    LOC = "P3"   ;
+NET  "AD_IO<7>"                    LOC = "R2"   ;
+NET  "AD_IO<6>"                    LOC = "T1"   ;
+NET  "AD_IO<5>"                    LOC = "R4"   ;
+NET  "AD_IO<4>"                    LOC = "T2"   ;
+NET  "AD_IO<3>"                    LOC = "U1"   ;
+NET  "AD_IO<2>"                    LOC = "R5"   ;
+NET  "AD_IO<1>"                    LOC = "V1"   ;
+NET  "AD_IO<0>"                    LOC = "T5"   ;
+################################################################################
+# Clock Buffer Placement
+################################################################################
+#
+#INST "XPCI_CKA"                                 LOC = "GCLKBUF3" ;
+#
+################################################################################
+# I/O Time Names
+################################################################################
+#
+NET  "SERR_IO"                                  TNM = PADS:PCI_PADS_C ;
+NET  "PERR_IO"                                  TNM = PADS:PCI_PADS_C ;
+NET  "REQ_O"                                    TNM = PADS:PCI_PADS_G ;
+NET  "GNT_I"                                    TNM = PADS:PCI_PADS_G ;
+NET  "FRAME_IO"                                 TNM = PADS:PCI_PADS_C ;
+NET  "IRDY_IO"                                  TNM = PADS:PCI_PADS_C ;
+NET  "TRDY_IO"                                  TNM = PADS:PCI_PADS_C ;
+NET  "DEVSEL_IO"                                TNM = PADS:PCI_PADS_C ;
+NET  "STOP_IO"                                  TNM = PADS:PCI_PADS_C ;
+NET  "CBE_IO<3>"                                TNM = PADS:PCI_PADS_B ;
+NET  "CBE_IO<2>"                                TNM = PADS:PCI_PADS_B ;
+NET  "CBE_IO<1>"                                TNM = PADS:PCI_PADS_B ;
+NET  "CBE_IO<0>"                                TNM = PADS:PCI_PADS_B ;
+NET  "PAR_IO"                                   TNM = PADS:PCI_PADS_P ;
+NET  "IDSEL_I"                                  TNM = PADS:PCI_PADS_C ;
+NET  "INTA_O"                                   TNM = PADS:PCI_PADS_X ;
+NET  "RST_I"                                    TNM = PADS:PCI_PADS_X ;
+#
+NET  "AD_IO<31>"                                TNM = PADS:PCI_PADS_D ;
+NET  "AD_IO<30>"                                TNM = PADS:PCI_PADS_D ;
+NET  "AD_IO<29>"                                TNM = PADS:PCI_PADS_D ;
+NET  "AD_IO<28>"                                TNM = PADS:PCI_PADS_D ;
+NET  "AD_IO<27>"                                TNM = PADS:PCI_PADS_D ;
+NET  "AD_IO<26>"                                TNM = PADS:PCI_PADS_D ;
+NET  "AD_IO<25>"                                TNM = PADS:PCI_PADS_D ;
+NET  "AD_IO<24>"                                TNM = PADS:PCI_PADS_D ;
+NET  "AD_IO<23>"                                TNM = PADS:PCI_PADS_D ;
+NET  "AD_IO<22>"                                TNM = PADS:PCI_PADS_D ;
+NET  "AD_IO<21>"                                TNM = PADS:PCI_PADS_D ;
+NET  "AD_IO<20>"                                TNM = PADS:PCI_PADS_D ;
+NET  "AD_IO<19>"                                TNM = PADS:PCI_PADS_D ;
+NET  "AD_IO<18>"                                TNM = PADS:PCI_PADS_D ;
+NET  "AD_IO<17>"                                TNM = PADS:PCI_PADS_D ;
+NET  "AD_IO<16>"                                TNM = PADS:PCI_PADS_D ;
+NET  "AD_IO<15>"                                TNM = PADS:PCI_PADS_D ;
+NET  "AD_IO<14>"                                TNM = PADS:PCI_PADS_D ;
+NET  "AD_IO<13>"                                TNM = PADS:PCI_PADS_D ;
+NET  "AD_IO<12>"                                TNM = PADS:PCI_PADS_D ;
+NET  "AD_IO<11>"                                TNM = PADS:PCI_PADS_D ;
+NET  "AD_IO<10>"                                TNM = PADS:PCI_PADS_D ;
+NET  "AD_IO<9>"                                 TNM = PADS:PCI_PADS_D ;
+NET  "AD_IO<8>"                                 TNM = PADS:PCI_PADS_D ;
+NET  "AD_IO<7>"                                 TNM = PADS:PCI_PADS_D ;
+NET  "AD_IO<6>"                                 TNM = PADS:PCI_PADS_D ;
+NET  "AD_IO<5>"                                 TNM = PADS:PCI_PADS_D ;
+NET  "AD_IO<4>"                                 TNM = PADS:PCI_PADS_D ;
+NET  "AD_IO<3>"                                 TNM = PADS:PCI_PADS_D ;
+NET  "AD_IO<2>"                                 TNM = PADS:PCI_PADS_D ;
+NET  "AD_IO<1>"                                 TNM = PADS:PCI_PADS_D ;
+NET  "AD_IO<0>"                                 TNM = PADS:PCI_PADS_D ;
+#
+#
+################################################################################
+# Time Specs
+################################################################################
+#
+# Important Note:  The timespecs used in this section cover all possible
+# paths.  Depending on the design options, some of the timespecs may
+# not contain any paths.  Such timespecs are ignored by PAR and TRCE.
+#
+# Note:  Timespecs are derived from the PCI Bus Specification, the minimum
+# clock delay of 0.000 ns, the maximum clock delay of 3.000 ns,
+# and a 90% tracking ratio between clock and data paths.
+#
+# Then, for paths on the primary global clock network:
+#
+#          1) Clk To Out   = 11.000ns - 3.000ns            = 8.000ns
+#          2) Setup        =  7.000ns + 90% * 0.000ns      = 7.000ns
+#          3) Grant Setup  = 10.000ns + 90% * 0.000ns      = 10.000ns
+#          4) AD_CBE Toff  = 28.000ns - 3.000ns            = 25.000ns
+#          5) AD_CBE Ton   = 30.000ns + 11.000ns - 3.000ns = 38.000ns
+#          6) Period       = 30.000ns
+#
+# The following timespecs are for setup specifications.  When using a
+# single clock, these timespecs are merged as pads-to-all.
+#
+TIMESPEC TS_ADF_SETUP = FROM : "PCI_PADS_D" : TO : "ALL_FFS" : 7.000 ;
+TIMESPEC TS_PAF_SETUP = FROM : "PCI_PADS_P" : TO : "ALL_FFS" : 7.000 ;
+TIMESPEC TS_BYF_SETUP = FROM : "PCI_PADS_B" : TO : "ALL_FFS" : 7.000 ;
+TIMESPEC TS_CNF_SETUP = FROM : "PCI_PADS_C" : TO : "ALL_FFS" : 7.000 ;
+TIMESPEC TS_GNF_SETUP = FROM : "PCI_PADS_G" : TO : "ALL_FFS" : 10.000 ;
+#
+# All critical input and output is registered to ensure clock to out
+# specifications are met by silicon.  When using a single clock, these
+# timespecs are merged as all-to-pads.
+#
+TIMESPEC TS_CNF_CKOUT = FROM : "ALL_FFS" : TO : "PCI_PADS_C" : 8.000 ;
+TIMESPEC TS_GNF_CKOUT = FROM : "ALL_FFS" : TO : "PCI_PADS_G" : 8.000 ;
+#
+# Similar to above, the critical input and output paths are registered
+# to ensure clock to out specifications are made by silicon.  Since this
+# interface uses address stepping, the clock to valid and clock to data
+# have different specifications.
+#
+TIMESPEC TS_ADF_CKOUT = FROM : "FAST_FFS" : TO : "PCI_PADS_D" : 8.000 ;
+TIMESPEC TS_ADS_TSOUT = FROM : "SLOW_FFS" : TO : "PCI_PADS_D" : 25.000 ;
+#
+TIMESPEC TS_BYF_CKOUT = FROM : "FAST_FFS" : TO : "PCI_PADS_B" : 8.000 ;
+TIMESPEC TS_BYS_TSOUT = FROM : "SLOW_FFS" : TO : "PCI_PADS_B" : 25.000 ;
+#
+TIMESPEC TS_PAF_CKOUT = FROM : "FAST_FFS" : TO : "PCI_PADS_P" : 8.000 ;
+TIMESPEC TS_PAS_TSOUT = FROM : "SLOW_FFS" : TO : "PCI_PADS_P" : 25.000 ;
+#
+# The design may be covered by a default period constraint.  This is
+# generally sufficient when using a single clock. The period should
+# be set at the minimum PCI Bus clock period.
+#
+#NET "PCLK" PERIOD = 30.000;
+#
+################################################################################
+# User Time Names / User Time Groups
+################################################################################
+#
+# Note:  Change the instance name for the user application to match the
+# instance name in your custom design.  The example design, used here,
+# is called Ping.  This timegroup is used to form other timegroups needed
+# for the interface.  Do not remove it.  Flip flops in this group will be
+# constrained to operate at the nominal PCI Bus clock frequency.  If the
+# user application is partially asynchronous to the PCI Bus clock, this
+# timegroup must minimally contain the flip flops which are synchronous.
+#
+##INST "pcim_top/USER_APP" TNM = FFS:USER_FFS ;
+#
+# You may add further time names and time groups specific to your custom
+# design as long as the do not interfere with the timegroups and time
+# specs used for the interface.
+#
+NET "LED"  LOC = "B12" | IOSTANDARD = LVCMOS2 ;
+
