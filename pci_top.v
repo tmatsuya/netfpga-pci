@@ -87,14 +87,14 @@ reg [2:0] seq_current_state = SEQ_IDLE, seq_next_state = SEQ_IDLE;
 //-----------------------------------
 // PCI configuration parameter/registers
 //-----------------------------------
-parameter CFG_VendorID		= 16'h3776;
+parameter CFG_VendorID		= 16'h6809;
 parameter CFG_DeviceID		= 16'h8000;
 parameter CFG_Command		= 16'h0000;
 parameter CFG_Status		= 16'h0200;
 parameter CFG_BaseClass 	= 8'h05;
 parameter CFG_SubClass 		= 8'h00;
 parameter CFG_ProgramIF		= 8'h00;
-parameter CFG_RevisionID	= 8'h01;
+parameter CFG_RevisionID	= 8'h00;
 parameter CFG_HeaderType	= 8'h00;
 parameter CFG_Int_Pin		= 8'h00;
 reg CFG_Cmd_Mst = 1'b0;
@@ -112,14 +112,28 @@ reg [7:0] CFG_Int_Line = 0;
 reg CFG_Sta_MAbt_Clr = 1'b0;
 reg CFG_Sta_TAbt_Clr = 1'b0;
 
+
 assign Hit_IO = 1'b0;
 assign Hit_Memory = (PCI_BusCommand[3:1] == PCI_MEM_CYCLE) & (PCI_Address[31:24] == CFG_Base_Addr0) & CFG_Cmd_Mem;
 assign Hit_Config = (PCI_BusCommand[3:1] == PCI_CFG_CYCLE) & PCI_IDSel & (PCI_Address[10:8] == 3'b000) & (PCI_Address[1:0] == 2'b00);
-assign Hit_ExpROM = (PCI_BusCommand[3:1] == PCI_MEM_CYCLE) & (PCI_Address[31:20] == CFG_ExpROM_Addr) & CFG_ExpROM_En;
+assign Hit_ExpROM = (PCI_BusCommand[3:1] == PCI_MEM_CYCLE) & (PCI_Address[31:20] == CFG_ExpROM_Addr[31:20]) & CFG_Cmd_Mem & CFG_ExpROM_En;
 assign Hit_Device = Hit_IO | Hit_Memory | Hit_Config | Hit_ExpROM;
 
 reg Local_Bus_Start = 1'b0;
 reg Local_DTACK = 1'b0;
+
+//-----------------------------------
+// ROM
+//-----------------------------------
+wire [31:0] dinp, dout;
+rom rom_inst (
+        .dinp(dinp),
+        .wren(1'b0),
+        .address(PCI_Address[10:2]),
+        .clk(PCLK),
+        .enable(Hit_ExpROM|Hit_Memory),
+        .dout(dout)
+);
 
 always @(posedge PCLK) begin
 	if (~RST_I) begin
@@ -238,7 +252,8 @@ always @(posedge PCLK) begin
 			end
 			SEQ_MEM_ACCESS: begin
 				if (~PCI_BusCommand[0]) begin
-					AD_Port[31:0] <= 32'hcdab3412;
+//					AD_Port[31:0] <= 32'hcdab3412;
+					AD_Port[31:0] <= dout[31:0];
 				end else begin
 					LED_Port <= AD_IO[0];
 				end
@@ -286,7 +301,7 @@ always @(posedge PCLK) begin
 							AD_Port[15:0]  <= CFG_VendorID;
 						end
 						6'b001100: begin	// Exp ROM Base Addr
-							AD_Port[31:20] <= CFG_ExpROM_Addr[31:24];
+							AD_Port[31:20] <= CFG_ExpROM_Addr;
 							AD_Port[19:1]  <= 19'b0;
 							AD_Port[0]     <= CFG_ExpROM_En;
 						end
@@ -339,7 +354,8 @@ always @(posedge PCLK) begin
 			end
 			SEQ_ROM_ACCESS: begin
 				if (~PCI_BusCommand[0]) begin
-					AD_Port[31:0] <= 32'hea00aa55;
+//					AD_Port[31:0] <= 32'hea00aa55;
+					AD_Port[31:0] <= dout[31:0];
 				end else begin
 					LED_Port <= AD_IO[0];
 				end
