@@ -80,6 +80,14 @@ assign Hit_Device = (PCI_BusCommand[3:1] == PCI_MEM_CYCLE) && (PCI_Address[31:4]
 reg Local_Bus_Start = 1'b0;
 reg Local_DTACK = 1'b0;
 
+//-----------------------------------
+// PCI configuration registers
+//-----------------------------------
+wire [255:0] CFG;
+cfg CFG_INST (
+	.CFG( CFG )
+);
+
 always @(posedge PCLK) begin
 	if (~RST_I) begin
 		pci_current_state <= PCI_IDLE;
