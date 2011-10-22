@@ -87,7 +87,7 @@ reg [2:0] seq_current_state = SEQ_IDLE, seq_next_state = SEQ_IDLE;
 //-----------------------------------
 // PCI configuration parameter/registers
 //-----------------------------------
-parameter CFG_VendorID		= 16'hABCD;
+parameter CFG_VendorID		= 16'h3776;
 parameter CFG_DeviceID		= 16'h8000;
 parameter CFG_Command		= 16'h0000;
 parameter CFG_Status		= 16'h0200;
