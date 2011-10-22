@@ -78,6 +78,7 @@ parameter SEQ_IDLE		= 3'b000;
 parameter SEQ_IO_ACCESS		= 3'b001;
 parameter SEQ_MEM_ACCESS	= 3'b010;
 parameter SEQ_CFG_ACCESS	= 3'b011;
+parameter SEQ_ROM_ACCESS	= 3'b100;
 parameter SEQ_COMPLETE		= 3'b111;
 
 reg [2:0] pci_current_state = PCI_IDLE, pci_next_state = PCI_IDLE;
@@ -86,7 +87,7 @@ reg [2:0] seq_current_state = SEQ_IDLE, seq_next_state = SEQ_IDLE;
 //-----------------------------------
 // PCI configuration parameter/registers
 //-----------------------------------
-parameter CFG_VendorID		= 16'h6809;
+parameter CFG_VendorID		= 16'hABCD;
 parameter CFG_DeviceID		= 16'h8000;
 parameter CFG_Command		= 16'h0000;
 parameter CFG_Status		= 16'h0200;
@@ -98,11 +99,14 @@ parameter CFG_HeaderType	= 8'h00;
 parameter CFG_Int_Pin		= 8'h00;
 reg CFG_Cmd_Mst = 1'b0;
 reg CFG_Cmd_Mem = 1'b0;
+reg CFG_Cmd_IO  = 1'b0;
 reg CFG_Cmd_IntDis = 1'b0;
 reg CFG_Sta_IntSta;
 reg CFG_Sta_MAbt;
 reg CFG_Sta_TAbt;
-reg [31:24] CFG_Base_Addr0 = 0;
+reg CFG_ExpROM_En = 1'b0;
+reg [31:24] CFG_Base_Addr0 = 8'h0;
+reg [31:20] CFG_ExpROM_Addr = 12'h0;
 reg [7:0] CFG_Int_Line = 0;
 
 reg CFG_Sta_MAbt_Clr = 1'b0;
@@ -111,7 +115,8 @@ reg CFG_Sta_TAbt_Clr = 1'b0;
 assign Hit_IO = 1'b0;
 assign Hit_Memory = (PCI_BusCommand[3:1] == PCI_MEM_CYCLE) & (PCI_Address[31:24] == CFG_Base_Addr0) & CFG_Cmd_Mem;
 assign Hit_Config = (PCI_BusCommand[3:1] == PCI_CFG_CYCLE) & PCI_IDSel & (PCI_Address[10:8] == 3'b000) & (PCI_Address[1:0] == 2'b00);
-assign Hit_Device = Hit_IO | Hit_Memory | Hit_Config;
+assign Hit_ExpROM = (PCI_BusCommand[3:1] == PCI_MEM_CYCLE) & (PCI_Address[31:20] == CFG_ExpROM_Addr) & CFG_ExpROM_En;
+assign Hit_Device = Hit_IO | Hit_Memory | Hit_Config | Hit_ExpROM;
 
 reg Local_Bus_Start = 1'b0;
 reg Local_DTACK = 1'b0;
@@ -220,6 +225,8 @@ always @(posedge PCLK) begin
 						seq_next_state <= SEQ_MEM_ACCESS;
 					else if (Hit_Config)
 						seq_next_state <= SEQ_CFG_ACCESS;
+					else if (Hit_ExpROM)
+						seq_next_state <= SEQ_ROM_ACCESS;
 				end
 			end
 			SEQ_IO_ACCESS: begin
@@ -231,7 +238,7 @@ always @(posedge PCLK) begin
 			end
 			SEQ_MEM_ACCESS: begin
 				if (~PCI_BusCommand[0]) begin
-					AD_Port[31:0] <= 32'h1234abcd;
+					AD_Port[31:0] <= 32'hcdab3412;
 				end else begin
 					LED_Port <= AD_IO[0];
 				end
@@ -257,7 +264,7 @@ always @(posedge PCLK) begin
 							AD_Port[9:3]   <= CFG_Command[9:3];
 							AD_Port[2]     <= CFG_Cmd_Mst;
 							AD_Port[1]     <= CFG_Cmd_Mem;
-							AD_Port[0]     <= 1'b1;
+							AD_Port[0]     <= CFG_Cmd_IO;
 						end
 						6'b000010: begin	// Class Code
 							AD_Port[31:24] <= CFG_BaseClass;
@@ -278,6 +285,11 @@ always @(posedge PCLK) begin
 							AD_Port[31:16] <= CFG_DeviceID;
 							AD_Port[15:0]  <= CFG_VendorID;
 						end
+						6'b001100: begin	// Exp ROM Base Addr
+							AD_Port[31:20] <= CFG_ExpROM_Addr[31:24];
+							AD_Port[19:1]  <= 19'b0;
+							AD_Port[0]     <= CFG_ExpROM_En;
+						end
 						6'b001111: begin	// Interrupt Register
 							AD_Port[31:16] <= 16'b0;
 							AD_Port[15:8]  <= CFG_Int_Pin;
@@ -288,7 +300,7 @@ always @(posedge PCLK) begin
 					endcase
 				end else begin
 					case (PCI_Address[7:2])
-						6'b000001: begin
+						6'b000001: begin	// Command/Status Register
 							if (~CBE_IO[3]) begin
 								CFG_Sta_MAbt_Clr <= AD_IO[29];
 								CFG_Sta_TAbt_Clr <= AD_IO[28];
@@ -299,19 +311,37 @@ always @(posedge PCLK) begin
 							if (~CBE_IO[0]) begin
 								CFG_Cmd_Mst <= AD_IO[2];
 								CFG_Cmd_Mem <= AD_IO[1];
+								CFG_Cmd_IO  <= AD_IO[0];
 							end
 						end
-						6'b000100: begin
+						6'b000100: begin	// Base Addr Register 0
 							if(~CBE_IO[3]) begin
 								CFG_Base_Addr0[31:24] <= AD_IO[31:24];
 							end
 						end
-						6'b001111: begin
+						6'b001100: begin	// Exp ROM Base Addr
+							if(~CBE_IO[3])
+								CFG_ExpROM_Addr[31:24] <= AD_IO[31:24];
+							if(~CBE_IO[2])
+								CFG_ExpROM_Addr[23:20] <= AD_IO[23:20];
+							if(~CBE_IO[0])
+								CFG_ExpROM_En <= AD_IO[0];
+						end
+						6'b001111: begin	// Interrupt Register
 							if(~CBE_IO[0]) begin
 								CFG_Int_Line[7:0] <= AD_IO[7:0];
 							end
 						end
 					endcase
+				end
+				Local_DTACK <= 1'b1;
+				seq_next_state <= SEQ_COMPLETE;
+			end
+			SEQ_ROM_ACCESS: begin
+				if (~PCI_BusCommand[0]) begin
+					AD_Port[31:0] <= 32'hea00aa55;
+				end else begin
+					LED_Port <= AD_IO[0];
 				end
 				Local_DTACK <= 1'b1;
 				seq_next_state <= SEQ_COMPLETE;
