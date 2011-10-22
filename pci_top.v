@@ -64,29 +64,57 @@ parameter PCI_ACC_COMPLETE	= 3'b101;
 parameter PCI_DISCONNECT	= 3'b110;
 parameter PCI_TURN_AROUND	= 3'b111;
 
+parameter PCI_IO_CYCLE		= 3'b001;
+parameter PCI_IO_READ_CYCLE	= 4'b0010;
+parameter PCI_IO_WRITE_CYCLE	= 4'b0011;
 parameter PCI_MEM_CYCLE		= 3'b011;
 parameter PCI_MEM_READ_CYCLE	= 4'b0110;
 parameter PCI_MEM_WRITE_CYCLE	= 4'b0111;
+parameter PCI_CFG_CYCLE		= 3'b101;
+parameter PCI_CFG_READ_CYCLE	= 4'b1010;
+parameter PCI_CFG_WRITE_CYCLE	= 4'b1011;
 
-parameter SEQ_IDLE		= 2'b00;
-parameter SEQ_MEM_ACCESS	= 2'b01;
-parameter SEQ_COMPLETE		= 2'b11;
+parameter SEQ_IDLE		= 3'b000;
+parameter SEQ_IO_ACCESS		= 3'b001;
+parameter SEQ_MEM_ACCESS	= 3'b010;
+parameter SEQ_CFG_ACCESS	= 3'b011;
+parameter SEQ_COMPLETE		= 3'b111;
 
 reg [2:0] pci_current_state = PCI_IDLE, pci_next_state = PCI_IDLE;
-reg [1:0] seq_current_state = SEQ_IDLE, seq_next_state = SEQ_IDLE;
+reg [2:0] seq_current_state = SEQ_IDLE, seq_next_state = SEQ_IDLE;
 
-assign Hit_Device = (PCI_BusCommand[3:1] == PCI_MEM_CYCLE) && (PCI_Address[31:4] == 32'h8000000);
+//-----------------------------------
+// PCI configuration parameter/registers
+//-----------------------------------
+parameter CFG_VendorID		= 16'h6809;
+parameter CFG_DeviceID		= 16'h8000;
+parameter CFG_Command		= 16'h0000;
+parameter CFG_Status		= 16'h0200;
+parameter CFG_BaseClass 	= 8'h05;
+parameter CFG_SubClass 		= 8'h00;
+parameter CFG_ProgramIF		= 8'h00;
+parameter CFG_RevisionID	= 8'h01;
+parameter CFG_HeaderType	= 8'h00;
+parameter CFG_Int_Pin		= 8'h00;
+reg CFG_Cmd_Mst = 1'b0;
+reg CFG_Cmd_Mem = 1'b0;
+reg CFG_Cmd_IntDis = 1'b0;
+reg CFG_Sta_IntSta;
+reg CFG_Sta_MAbt;
+reg CFG_Sta_TAbt;
+reg [31:24] CFG_Base_Addr0 = 0;
+reg [7:0] CFG_Int_Line = 0;
+
+reg CFG_Sta_MAbt_Clr = 1'b0;
+reg CFG_Sta_TAbt_Clr = 1'b0;
+
+assign Hit_IO = 1'b0;
+assign Hit_Memory = (PCI_BusCommand[3:1] == PCI_MEM_CYCLE) & (PCI_Address[31:24] == CFG_Base_Addr0) & CFG_Cmd_Mem;
+assign Hit_Config = (PCI_BusCommand[3:1] == PCI_CFG_CYCLE) & PCI_IDSel & (PCI_Address[10:8] == 3'b000) & (PCI_Address[1:0] == 2'b00);
+assign Hit_Device = Hit_IO | Hit_Memory | Hit_Config;
 
 reg Local_Bus_Start = 1'b0;
 reg Local_DTACK = 1'b0;
-
-//-----------------------------------
-// PCI configuration registers
-//-----------------------------------
-wire [255:0] CFG;
-cfg CFG_INST (
-	.CFG( CFG )
-);
 
 always @(posedge PCLK) begin
 	if (~RST_I) begin
@@ -185,8 +213,21 @@ always @(posedge PCLK) begin
 		seq_current_state <= seq_next_state;
 		case (seq_current_state)
 			SEQ_IDLE: begin
-				if (Local_Bus_Start)
-					seq_next_state <= SEQ_MEM_ACCESS;
+				if (Local_Bus_Start) begin
+					if (Hit_IO)
+						seq_next_state <= SEQ_IO_ACCESS;
+					else if (Hit_Memory)
+						seq_next_state <= SEQ_MEM_ACCESS;
+					else if (Hit_Config)
+						seq_next_state <= SEQ_CFG_ACCESS;
+				end
+			end
+			SEQ_IO_ACCESS: begin
+				if (~PCI_BusCommand[0]) begin
+				end else begin
+				end
+				Local_DTACK <= 1'b1;
+				seq_next_state <= SEQ_COMPLETE;
 			end
 			SEQ_MEM_ACCESS: begin
 				if (~PCI_BusCommand[0]) begin
@@ -197,10 +238,90 @@ always @(posedge PCLK) begin
 				Local_DTACK <= 1'b1;
 				seq_next_state <= SEQ_COMPLETE;
 			end
+			SEQ_CFG_ACCESS: begin
+				if (~PCI_BusCommand[0]) begin
+					case (PCI_Address[7:2])
+						6'b000000: begin	// Vendor/Device ID
+							AD_Port[31:16] <= CFG_DeviceID;
+							AD_Port[15:0]  <= CFG_VendorID;
+						end
+						6'b000001: begin	// Command/Status Register
+							AD_Port[31:30] <= CFG_Status[15:14];
+							AD_Port[29]    <= CFG_Sta_MAbt;
+							AD_Port[28]    <= CFG_Sta_TAbt;
+							AD_Port[27:20] <= CFG_Status[11:4];
+							AD_Port[19]    <= CFG_Sta_IntSta;
+							AD_Port[18:16] <= CFG_Status[2:0];
+							AD_Port[15:11] <= CFG_Command[15:11];
+							AD_Port[10]    <= CFG_Cmd_IntDis;
+							AD_Port[9:3]   <= CFG_Command[9:3];
+							AD_Port[2]     <= CFG_Cmd_Mst;
+							AD_Port[1]     <= CFG_Cmd_Mem;
+							AD_Port[0]     <= 1'b1;
+						end
+						6'b000010: begin	// Class Code
+							AD_Port[31:24] <= CFG_BaseClass;
+							AD_Port[23:16] <= CFG_SubClass;
+							AD_Port[15:8]  <= CFG_ProgramIF;
+							AD_Port[7:0]   <= CFG_RevisionID;
+						end
+						6'b000011: begin	// Header Type/other
+							AD_Port[31:24] <= 8'b0;
+							AD_Port[23:16] <= CFG_HeaderType;
+							AD_Port[15:0]  <= 16'b0;
+						end
+						6'b000100: begin	// Base Addr Register 0
+							AD_Port[31:24] <= CFG_Base_Addr0;
+							AD_Port[23:0]  <= 24'b0;
+						end
+						6'b001011: begin	// Sub System Vendor/Sub System ID
+							AD_Port[31:16] <= CFG_DeviceID;
+							AD_Port[15:0]  <= CFG_VendorID;
+						end
+						6'b001111: begin	// Interrupt Register
+							AD_Port[31:16] <= 16'b0;
+							AD_Port[15:8]  <= CFG_Int_Pin;
+							AD_Port[7:0]   <= CFG_Int_Line;
+						end
+						default:
+							AD_Port[31:0]  <= 32'h0;
+					endcase
+				end else begin
+					case (PCI_Address[7:2])
+						6'b000001: begin
+							if (~CBE_IO[3]) begin
+								CFG_Sta_MAbt_Clr <= AD_IO[29];
+								CFG_Sta_TAbt_Clr <= AD_IO[28];
+							end
+							if (~CBE_IO[1]) begin
+								CFG_Cmd_IntDis <= AD_IO[10];
+							end
+							if (~CBE_IO[0]) begin
+								CFG_Cmd_Mst <= AD_IO[2];
+								CFG_Cmd_Mem <= AD_IO[1];
+							end
+						end
+						6'b000100: begin
+							if(~CBE_IO[3]) begin
+								CFG_Base_Addr0[31:24] <= AD_IO[31:24];
+							end
+						end
+						6'b001111: begin
+							if(~CBE_IO[0]) begin
+								CFG_Int_Line[7:0] <= AD_IO[7:0];
+							end
+						end
+					endcase
+				end
+				Local_DTACK <= 1'b1;
+				seq_next_state <= SEQ_COMPLETE;
+			end
 			SEQ_COMPLETE: begin
 				Local_DTACK <= 1'b0;
 				seq_next_state <= SEQ_IDLE;
 			end
+			default:
+				seq_next_state <= SEQ_IDLE;
 		endcase
 	end
 end

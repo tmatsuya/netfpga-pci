@@ -66,10 +66,10 @@ module cfg ( CFG );
   /*************************************************************/
 
   // Device ID and Vendor ID
-  assign CFG[151:120] = 32'h0001_FEED ;
+  assign CFG[031:000] = 32'h0001_FEED ;
 
   // Class Code and  Revision ID
-  assign CFG[183:152] = 32'h02000000 ;
+  assign CFG[095:064] = 32'h02000000 ;
 
   /*************************************************************/
   /*  Configure Subsystem ID and SubVendor ID                  */
