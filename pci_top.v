@@ -106,7 +106,7 @@ reg CFG_Sta_MAbt;
 reg CFG_Sta_TAbt;
 reg CFG_ExpROM_En = 1'b0;
 reg [31:24] CFG_Base_Addr0 = 8'h0;
-reg [15:2]  CFG_Base_Addr1 = 14'h0;
+reg [15:5]  CFG_Base_Addr1 = 11'h0;
 reg [31:20] CFG_ExpROM_Addr = 12'h0;
 reg [7:0] CFG_Int_Line = 0;
 
@@ -114,7 +114,7 @@ reg CFG_Sta_MAbt_Clr = 1'b0;
 reg CFG_Sta_TAbt_Clr = 1'b0;
 
 
-assign Hit_IO = (PCI_BusCommand[3:1] == PCI_IO_CYCLE) & (PCI_Address[31:2] == {16'h0,CFG_Base_Addr1[15:2]}) & CFG_Cmd_IO;
+assign Hit_IO = (PCI_BusCommand[3:1] == PCI_IO_CYCLE) & (PCI_Address[31:5] == {16'h0,CFG_Base_Addr1[15:5]}) & CFG_Cmd_IO;
 assign Hit_Memory = (PCI_BusCommand[3:1] == PCI_MEM_CYCLE) & (PCI_Address[31:24] == CFG_Base_Addr0) & CFG_Cmd_Mem;
 assign Hit_Config = (PCI_BusCommand[3:1] == PCI_CFG_CYCLE) & PCI_IDSel & (PCI_Address[10:8] == 3'b000) & (PCI_Address[1:0] == 2'b00);
 assign Hit_ExpROM = (PCI_BusCommand[3:1] == PCI_MEM_CYCLE) & (PCI_Address[31:20] == CFG_ExpROM_Addr[31:20]) & CFG_Cmd_Mem & CFG_ExpROM_En;
@@ -234,7 +234,7 @@ always @(posedge PCLK) begin
 		CFG_Cmd_IntDis <= 1'b0;
 		CFG_ExpROM_En <= 1'b0;
 		CFG_Base_Addr0 <= 8'h0;
-		CFG_Base_Addr1 <= 14'h0;
+		CFG_Base_Addr1 <= 11'h0;
 		CFG_ExpROM_Addr <= 12'h0;
 		CFG_Int_Line <= 0;
 		CFG_Sta_MAbt_Clr <= 1'b0;
@@ -311,7 +311,7 @@ always @(posedge PCLK) begin
 							AD_Port[23:0]  <= 24'b0;
 						end
 						6'b000101: begin	// Base Addr Register 1
-							AD_Port[31:0]  <= {16'h0, CFG_Base_Addr1, 2'b01};
+							AD_Port[31:0]  <= {16'h0, CFG_Base_Addr1, 5'b00001};
 						end
 						6'b001011: begin	// Sub System Vendor/Sub System ID
 							AD_Port[31:16] <= CFG_DeviceID;
@@ -356,7 +356,7 @@ always @(posedge PCLK) begin
 								CFG_Base_Addr1[15:8]  <= AD_IO[15:8];
 							end
 							if(~CBE_IO[0]) begin
-								CFG_Base_Addr1[7:2]   <= AD_IO[7:2];
+								CFG_Base_Addr1[7:5]   <= AD_IO[7:5];
 							end
 						end
 						6'b001100: begin	// Exp ROM Base Addr
