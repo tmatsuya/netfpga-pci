@@ -106,6 +106,7 @@ reg CFG_Sta_MAbt;
 reg CFG_Sta_TAbt;
 reg CFG_ExpROM_En = 1'b0;
 reg [31:24] CFG_Base_Addr0 = 8'h0;
+reg [15:2]  CFG_Base_Addr1 = 14'h0;
 reg [31:20] CFG_ExpROM_Addr = 12'h0;
 reg [7:0] CFG_Int_Line = 0;
 
@@ -113,7 +114,7 @@ reg CFG_Sta_MAbt_Clr = 1'b0;
 reg CFG_Sta_TAbt_Clr = 1'b0;
 
 
-assign Hit_IO = 1'b0;
+assign Hit_IO = (PCI_BusCommand[3:1] == PCI_IO_CYCLE) & (PCI_Address[31:2] == {16'h0,CFG_Base_Addr1[15:2]}) & CFG_Cmd_IO;
 assign Hit_Memory = (PCI_BusCommand[3:1] == PCI_MEM_CYCLE) & (PCI_Address[31:24] == CFG_Base_Addr0) & CFG_Cmd_Mem;
 assign Hit_Config = (PCI_BusCommand[3:1] == PCI_CFG_CYCLE) & PCI_IDSel & (PCI_Address[10:8] == 3'b000) & (PCI_Address[1:0] == 2'b00);
 assign Hit_ExpROM = (PCI_BusCommand[3:1] == PCI_MEM_CYCLE) & (PCI_Address[31:20] == CFG_ExpROM_Addr[31:20]) & CFG_Cmd_Mem & CFG_ExpROM_En;
@@ -227,6 +228,17 @@ always @(posedge PCLK) begin
 		seq_current_state <= SEQ_IDLE;
 		seq_next_state <= SEQ_IDLE;
 		AD_Port <= 32'h0;
+		CFG_Cmd_Mst <= 1'b0;
+		CFG_Cmd_Mem <= 1'b0;
+		CFG_Cmd_IO  <= 1'b0;
+		CFG_Cmd_IntDis <= 1'b0;
+		CFG_ExpROM_En <= 1'b0;
+		CFG_Base_Addr0 <= 8'h0;
+		CFG_Base_Addr1 <= 14'h0;
+		CFG_ExpROM_Addr <= 12'h0;
+		CFG_Int_Line <= 0;
+		CFG_Sta_MAbt_Clr <= 1'b0;
+		CFG_Sta_TAbt_Clr <= 1'b0;
 		Local_DTACK <= 1'b0;
 	end else begin
 		seq_current_state <= seq_next_state;
@@ -245,7 +257,9 @@ always @(posedge PCLK) begin
 			end
 			SEQ_IO_ACCESS: begin
 				if (~PCI_BusCommand[0]) begin
+					AD_Port[31:0] <= 32'hcdab3412;
 				end else begin
+					LED_Port <= AD_IO[0];
 				end
 				Local_DTACK <= 1'b1;
 				seq_next_state <= SEQ_COMPLETE;
@@ -296,6 +310,9 @@ always @(posedge PCLK) begin
 							AD_Port[31:24] <= CFG_Base_Addr0;
 							AD_Port[23:0]  <= 24'b0;
 						end
+						6'b000101: begin	// Base Addr Register 1
+							AD_Port[31:0]  <= {16'h0, CFG_Base_Addr1, 2'b01};
+						end
 						6'b001011: begin	// Sub System Vendor/Sub System ID
 							AD_Port[31:16] <= CFG_DeviceID;
 							AD_Port[15:0]  <= CFG_VendorID;
@@ -332,6 +349,14 @@ always @(posedge PCLK) begin
 						6'b000100: begin	// Base Addr Register 0
 							if(~CBE_IO[3]) begin
 								CFG_Base_Addr0[31:24] <= AD_IO[31:24];
+							end
+						end
+						6'b000101: begin	// Base Addr Register 1
+							if(~CBE_IO[1]) begin
+								CFG_Base_Addr1[15:8]  <= AD_IO[15:8];
+							end
+							if(~CBE_IO[0]) begin
+								CFG_Base_Addr1[7:2]   <= AD_IO[7:2];
 							end
 						end
 						6'b001100: begin	// Exp ROM Base Addr
