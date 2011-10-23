@@ -1,3 +1,6 @@
+`include "setup.v"
+
+`ifdef ENABLE_EXPROM
 module rom(
 	input  [31:0] dinp,
 	input         wren,
@@ -41,6 +44,7 @@ rom0 rom0_inst (
 	.dout(dout[31:24])
 );
 endmodule
+`endif
 
 //-----------------------------------
 // これ以降は rom2verilog.c を使って自動生成したものをコピーする

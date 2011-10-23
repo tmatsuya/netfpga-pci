@@ -10,7 +10,7 @@
   Copyright (c) 2011 macchan@sfc.wide.ad.jp, Inc.  All rights reserved.
 
 ***********************************************************************/
-//`include "defines.v"
+`include "setup.v"
 
 module pci_top (
 	inout         RST_I,
@@ -127,6 +127,7 @@ reg Local_DTACK = 1'b0;
 // ROM
 //-----------------------------------
 wire [31:0] dinp, dout;
+`ifdef ENABLE_EXPROM
 rom rom_inst (
         .dinp(dinp),
         .wren(1'b0),
@@ -135,6 +136,9 @@ rom rom_inst (
         .enable(Hit_ExpROM|Hit_Memory),
         .dout(dout)
 );
+`else
+	assign dout[31:0] = 32'hcdab3412;
+`endif
 
 always @(posedge PCLK) begin
 	if (~RST_I) begin
@@ -266,7 +270,6 @@ always @(posedge PCLK) begin
 			end
 			SEQ_MEM_ACCESS: begin
 				if (~PCI_BusCommand[0]) begin
-//					AD_Port[31:0] <= 32'hcdab3412;
 					AD_Port[31:0] <= dout[31:0];
 				end else begin
 					LED_Port <= AD_IO[0];
@@ -317,11 +320,13 @@ always @(posedge PCLK) begin
 							AD_Port[31:16] <= CFG_DeviceID;
 							AD_Port[15:0]  <= CFG_VendorID;
 						end
+`ifdef ENABLE_EXPROM
 						6'b001100: begin	// Exp ROM Base Addr
 							AD_Port[31:20] <= CFG_ExpROM_Addr;
 							AD_Port[19:1]  <= 19'b0;
 							AD_Port[0]     <= CFG_ExpROM_En;
 						end
+`endif
 						6'b001111: begin	// Interrupt Register
 							AD_Port[31:16] <= 16'b0;
 							AD_Port[15:8]  <= CFG_Int_Pin;
@@ -359,6 +364,7 @@ always @(posedge PCLK) begin
 								CFG_Base_Addr1[7:5]   <= AD_IO[7:5];
 							end
 						end
+`ifdef ENABLE_EXPROM
 						6'b001100: begin	// Exp ROM Base Addr
 							if(~CBE_IO[3])
 								CFG_ExpROM_Addr[31:24] <= AD_IO[31:24];
@@ -367,6 +373,7 @@ always @(posedge PCLK) begin
 							if(~CBE_IO[0])
 								CFG_ExpROM_En <= AD_IO[0];
 						end
+`endif
 						6'b001111: begin	// Interrupt Register
 							if(~CBE_IO[0]) begin
 								CFG_Int_Line[7:0] <= AD_IO[7:0];
@@ -379,7 +386,6 @@ always @(posedge PCLK) begin
 			end
 			SEQ_ROM_ACCESS: begin
 				if (~PCI_BusCommand[0]) begin
-//					AD_Port[31:0] <= 32'hea00aa55;
 					AD_Port[31:0] <= dout[31:0];
 				end else begin
 					LED_Port <= AD_IO[0];
