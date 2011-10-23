@@ -44,10 +44,10 @@ rom0 rom0_inst (
 	.dout(dout[31:24])
 );
 endmodule
-`endif
 
 //-----------------------------------
 // これ以降は rom2verilog.c を使って自動生成したものをコピーする
 //-----------------------------------
 
 `include "initdata.v"
+`endif
