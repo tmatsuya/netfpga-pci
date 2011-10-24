@@ -1,1 +1,1 @@
-`define	ENABLE_EXPROM
+//`define	ENABLE_EXPROM
