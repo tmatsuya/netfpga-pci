@@ -1,0 +1,3 @@
+cp -p ../rombios/ROMBIOS.ROM .
+./rom2verilog < ROMBIOS.ROM >initdata.v
+touch rom.v
