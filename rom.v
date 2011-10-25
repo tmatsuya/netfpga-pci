@@ -1,4 +1,4 @@
-`include "setup.v"
+`define ENABLE_EXPROM
 
 `ifdef ENABLE_EXPROM
 module rom(

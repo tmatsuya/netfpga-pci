@@ -10,7 +10,7 @@
   Copyright (c) 2011 macchan@sfc.wide.ad.jp, Inc.  All rights reserved.
 
 ***********************************************************************/
-`include "setup.v"
+`define ENABLE_EXPROM
 
 module pci_top (
 	inout         RST_I,
@@ -44,7 +44,7 @@ reg PCI_IDSel = 1'b0;
 //-----------------------------------
 // Port register
 //-----------------------------------
-reg AD_Hiz = 1'b1;
+reg AD_Hiz               = 1'b1;
 reg [31:0] AD_Port       = 32'h0;
 reg DEVSEL_Hiz           = 1'b1;
 reg DEVSEL_Port          = 1'b1;
@@ -53,7 +53,7 @@ reg TRDY_Port            = 1'b1;
 reg STOP_Hiz             = 1'b1;
 reg STOP_Port            = 1'b1;
 
-reg REQ_Port             = 1'b0;
+reg REQ_Port             = 1'b1;
 reg PCIMSTAD_Hiz         = 1'b1;
 wire [31:0] PCIMSTAD_Port;
 reg CBE_Hiz              = 1'b1;
@@ -155,7 +155,7 @@ reg CFG_Sta_TAbt_Clr = 1'b0;
 assign Hit_IO = (PCI_BusCommand[3:1] == PCI_IO_CYCLE) & (PCI_Address[31:5] == {16'h0,CFG_Base_Addr1[15:5]}) & CFG_Cmd_IO;
 assign Hit_Memory = (PCI_BusCommand[3:1] == PCI_MEM_CYCLE) & (PCI_Address[31:24] == CFG_Base_Addr0) & CFG_Cmd_Mem;
 assign Hit_Config = (PCI_BusCommand[3:1] == PCI_CFG_CYCLE) & PCI_IDSel & (PCI_Address[10:8] == 3'b000) & (PCI_Address[1:0] == 2'b00);
-assign Hit_ExpROM = (PCI_BusCommand[3:1] == PCI_MEM_CYCLE) & (PCI_Address[31:20] == CFG_ExpROM_Addr[31:20]) & CFG_Cmd_Mem & CFG_ExpROM_En;
+assign Hit_ExpROM = (PCI_BusCommand[3:1] == PCI_MEM_CYCLE) & (PCI_Address[31:20] == CFG_ExpROM_Addr) & CFG_Cmd_Mem & CFG_ExpROM_En;
 assign Hit_Device = Hit_IO | Hit_Memory | Hit_Config | Hit_ExpROM;
 
 reg Local_Bus_Start = 1'b0;
@@ -293,14 +293,14 @@ always @(posedge PCLK) begin
 		initiator_next_state <= INI_IDLE;
 	end else begin
 		initiator_current_state <= initiator_next_state;
-		case (target_current_state)
+		case (initiator_current_state)
 			INI_IDLE: begin
 				if (CFG_Cmd_Mst) begin
 					if (MST_Start | Retry) begin
 						MST_Busy <= 1'b1;
 						if (~GNT_I & FRAME_IO & IRDY_IO) begin
 							PCIMSTAD_Hiz <= 1'b0;
-							CBE_Hiz     <= 1'b0;
+							CBE_Hiz      <= 1'b0;
 							FRAME_Port   <= 1'b0;
 							FRAME_Hiz    <= 1'b0;
 							initiator_next_state <= INI_ADDR2DATA;
@@ -335,13 +335,14 @@ always @(posedge PCLK) begin
 				end
 			end
 			INI_ADDR2DATA: begin
-				FRAME_Port  <= 1'b0;
+				FRAME_Port  <= 1'b1;
 				IRDY_Port   <= 1'b0;
 				IRDY_Hiz    <= 1'b0;
 				if (~MST_ReadWrite)
 					PCIMSTAD_Hiz <= 1'b1;
 				TGT_Abort <= 1'b0;
 				MST_Abort <= 1'b0;
+				Retry     <= 1'b0;
 				initiator_next_state <= INI_WAIT_DEVSEL;
 			end
 			INI_WAIT_DEVSEL: begin
@@ -403,7 +404,7 @@ always @(posedge PCLK) begin
 			end
 			INI_TURN_AROUND: begin
 				IRDY_Hiz     <= 1'b1;
-				DEVSEL_Count <= 0;
+				DEVSEL_Count <= 4'h0;
 				initiator_next_state <= INI_IDLE;
 			end
 			default:
@@ -622,7 +623,7 @@ always @(posedge PCLK) begin
 end
 
 assign CBE_IO    = CBE_Hiz   ? 4'hz : CBE_Port;
-assign AD_IO     = AD_Hiz    ?32'hz : AD_Port;
+assign AD_IO     = (AD_Hiz & PCIMSTAD_Hiz) ? 32'hz : (AD_Hiz ? PCIMSTAD_Port : AD_Port);
 assign PAR_IO    = 1'hz;
 assign FRAME_IO  = FRAME_Hiz ? 1'hz : FRAME_Port;
 assign IRDY_IO   = IRDY_Hiz  ? 1'hz : IRDY_Port;
