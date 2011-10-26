@@ -200,7 +200,7 @@ always @(posedge PCLK) begin
 		target_current_state <= target_next_state;
 		case (target_current_state)
 			TGT_IDLE: begin
-				if (~FRAME_IO && IRDY_IO) begin
+				if (~FRAME_IO & IRDY_IO) begin
 					PCI_BusCommand <= CBE_IO;
 					PCI_Address <= AD_IO;
 					PCI_IDSel <= IDSEL_I;
@@ -291,6 +291,19 @@ always @(posedge PCLK) begin
 	if (~RST_I) begin
 		initiator_current_state <= INI_IDLE;
 		initiator_next_state <= INI_IDLE;
+		// Initiator Registers
+		PCIMSTAD_Hiz         <= 1'b1;
+		CBE_Hiz              <= 1'b1;
+		FRAME_Hiz            <= 1'b1;
+		FRAME_Port           <= 1'b1;
+		IRDY_Hiz             <= 1'b1;
+		IRDY_Port            <= 1'b1;
+		REQ_Port             <= 1'b1;
+		MST_Busy             <= 1'b0;
+		MST_Abort            <= 1'b0;
+		TGT_Abort            <= 1'b0;
+		DEVSEL_Count         <= 4'd0;
+		Retry                <= 1'b0;
 	end else begin
 		initiator_current_state <= initiator_next_state;
 		case (initiator_current_state)
@@ -422,6 +435,7 @@ always @(posedge PCLK) begin
 		seq_current_state <= SEQ_IDLE;
 		seq_next_state <= SEQ_IDLE;
 		AD_Port <= 32'h0;
+		// Configurartion Register
 		CFG_Cmd_Mst <= 1'b0;
 		CFG_Cmd_Mem <= 1'b0;
 		CFG_Cmd_IO  <= 1'b0;
@@ -433,6 +447,14 @@ always @(posedge PCLK) begin
 		CFG_Int_Line <= 0;
 		CFG_Sta_MAbt_Clr <= 1'b0;
 		CFG_Sta_TAbt_Clr <= 1'b0;
+		// Initiator Registers
+		MST_Start     <= 1'b0;
+		MST_Address   <= 30'h0;
+		MST_WriteData <= 32'h0;
+		MST_IntStat   <= 1'b0;
+		MST_IntClr    <= 1'b0;
+		MST_IntMask   <= 1'b0;
+
 		Local_DTACK <= 1'b0;
 	end else begin
 		seq_current_state <= seq_next_state;
