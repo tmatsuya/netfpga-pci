@@ -1,4 +1,4 @@
-`define ENABLE_EXPROM
+//`define ENABLE_EXPROM
 
 `ifdef ENABLE_EXPROM
 module rom(

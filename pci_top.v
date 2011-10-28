@@ -10,7 +10,7 @@
   Copyright (c) 2011 macchan@sfc.wide.ad.jp, Inc.  All rights reserved.
 
 ***********************************************************************/
-`define ENABLE_EXPROM
+//`define ENABLE_EXPROM
 
 module pci_top (
 	inout         RST_I,
@@ -62,6 +62,8 @@ reg FRAME_Hiz            = 1'b1;
 reg FRAME_Port           = 1'b1;
 reg IRDY_Hiz             = 1'b1;
 reg IRDY_Port            = 1'b1;
+reg PAR_Hiz              = 1'b1;
+reg PAR_Port             = 1'b0;
 
 //-----------------------------------
 // Initiator register
@@ -93,23 +95,23 @@ parameter PCI_CFG_CYCLE		= 3'b101;
 parameter PCI_CFG_READ_CYCLE	= 4'b1010;
 parameter PCI_CFG_WRITE_CYCLE	= 4'b1011;
 
-parameter TGT_IDLE		= 3'b000;
-parameter TGT_ADDR_COMPARE	= 3'b001;
-parameter TGT_BUS_BUSY		= 3'b010;
-parameter TGT_WAIT_IRDY		= 3'b011;
-parameter TGT_WAIT_LOCAL_ACK	= 3'b100;
-parameter TGT_ACC_COMPLETE	= 3'b101;
-parameter TGT_DISCONNECT	= 3'b110;
-parameter TGT_TURN_AROUND	= 3'b111;
+parameter TGT_IDLE		= 3'h0;
+parameter TGT_ADDR_COMPARE	= 3'h1;
+parameter TGT_BUS_BUSY		= 3'h2;
+parameter TGT_WAIT_IRDY		= 3'h3;
+parameter TGT_WAIT_LOCAL_ACK	= 3'h4;
+parameter TGT_ACC_COMPLETE	= 3'h5;
+parameter TGT_DISCONNECT	= 3'h6;
+parameter TGT_TURN_AROUND	= 3'h7;
 
-parameter INI_IDLE		= 3'b000;
-parameter INI_BUS_PARK		= 3'b001;
-parameter INI_WAIT_GNT		= 3'b010;
-parameter INI_ADDR2DATA		= 3'b011;
-parameter INI_WAIT_DEVSEL	= 3'b100;
-parameter INI_WAIT_COMPLETE	= 3'b101;
-parameter INI_ABORT		= 3'b110;
-parameter INI_TURN_AROUND	= 3'b111;
+parameter INI_IDLE		= 3'h0;
+parameter INI_BUS_PARK		= 3'h1;
+parameter INI_WAIT_GNT		= 3'h2;
+parameter INI_ADDR2DATA		= 3'h3;
+parameter INI_WAIT_DEVSEL	= 3'h4;
+parameter INI_WAIT_COMPLETE	= 3'h5;
+parameter INI_ABORT		= 3'h6;
+parameter INI_TURN_AROUND	= 3'h7;
 
 parameter SEQ_IDLE		= 3'b000;
 parameter SEQ_IO_ACCESS		= 3'b001;
@@ -200,7 +202,8 @@ always @(posedge PCLK) begin
 		target_current_state <= target_next_state;
 		case (target_current_state)
 			TGT_IDLE: begin
-				if (~FRAME_IO & IRDY_IO) begin
+//				if (~FRAME_IO & IRDY_IO) begin
+				if (~FRAME_IO & IRDY_IO && initiator_current_state == INI_IDLE) begin
 					PCI_BusCommand <= CBE_IO;
 					PCI_Address <= AD_IO;
 					PCI_IDSel <= IDSEL_I;
@@ -309,7 +312,8 @@ always @(posedge PCLK) begin
 		case (initiator_current_state)
 			INI_IDLE: begin
 				if (CFG_Cmd_Mst) begin
-					if (MST_Start | Retry) begin
+//					if (MST_Start | Retry) begin
+					if ((MST_Start | Retry) & target_current_state == TGT_IDLE) begin
 						MST_Busy <= 1'b1;
 						if (~GNT_I & FRAME_IO & IRDY_IO) begin
 							PCIMSTAD_Hiz <= 1'b0;
@@ -458,6 +462,9 @@ always @(posedge PCLK) begin
 		Local_DTACK <= 1'b0;
 	end else begin
 		seq_current_state <= seq_next_state;
+if (initiator_next_state == INI_WAIT_DEVSEL)
+MST_Start     <= 1'b0;
+
 		case (seq_current_state)
 			SEQ_IDLE: begin
 				if (Local_Bus_Start) begin
@@ -515,7 +522,7 @@ always @(posedge PCLK) begin
 							if (~CBE_IO[1])
 								MST_WriteData[15: 8] <= AD_IO[15: 8];
 							if (~CBE_IO[0])
-								MST_WriteData[ 7: 2] <= AD_IO[ 7: 2];
+								MST_WriteData[ 7: 0] <= AD_IO[ 7: 0];
 						end
 						default:
 							LED_Port <= AD_IO[0];
@@ -644,9 +651,34 @@ always @(posedge PCLK) begin
 	end
 end
 
+//-----------------------------------
+// Parity Generator
+//-----------------------------------
+assign TGT_temp_PAR_DB  = ^AD_Port;
+assign TGT_temp_PAR_CBE = ^CBE_IO;
+assign TGT_PAR = TGT_temp_PAR_DB ^ TGT_temp_PAR_CBE;
+assign INI_temp_PAR_DB  = ^PCIMSTAD_Port;
+assign INI_temp_PAR_CBE = ^CBE_Port;
+assign INI_PAR = INI_temp_PAR_DB ^ INI_temp_PAR_CBE;
+always @(posedge PCLK) begin
+	if (~RST_I) begin
+		PAR_Hiz   <= 1'b1;
+		PAR_Port  <= 1'b0;
+	end else begin
+		if (~PCIMSTAD_Hiz)
+			PAR_Port <= INI_PAR;
+		else
+			PAR_Port <= TGT_PAR;
+		if (PCIMSTAD_Hiz & AD_Hiz)
+			PAR_Hiz <= 1'b1;
+		else
+			PAR_Hiz <= 1'b0;
+	end
+end
+
 assign CBE_IO    = CBE_Hiz   ? 4'hz : CBE_Port;
 assign AD_IO     = (AD_Hiz & PCIMSTAD_Hiz) ? 32'hz : (AD_Hiz ? PCIMSTAD_Port : AD_Port);
-assign PAR_IO    = 1'hz;
+assign PAR_IO    = PAR_Hiz   ? 1'hz : PAR_Port;
 assign FRAME_IO  = FRAME_Hiz ? 1'hz : FRAME_Port;
 assign IRDY_IO   = IRDY_Hiz  ? 1'hz : IRDY_Port;
 assign TRDY_IO   = TRDY_Hiz  ? 1'hz : TRDY_Port;
@@ -655,5 +687,52 @@ assign DEVSEL_IO = DEVSEL_Hiz? 1'hz : DEVSEL_Port;
 assign INTA_O    = 1'hz;
 assign REQ_O     = REQ_Port;
 assign LED       = ~LED_Port;
+
+//-----------------------------------
+// Chipscope Pro Module
+//-----------------------------------
+wire [35 : 0] CONTROL;
+wire [7 : 0] TRIG;
+wire [63 : 0] DATA;
+cs_icon INST_ICON (
+	.CONTROL0(CONTROL)
+);
+cs_ila INST_ILA (
+	.CLK(PCLK),
+	.CONTROL(CONTROL),
+	.TRIG0(TRIG),
+	.DATA(DATA)
+);
+assign DATA[31:0]   = AD_IO;
+assign DATA[35:32]  = CBE_IO;
+assign DATA[36]     = PAR_IO;
+assign DATA[37]     = FRAME_IO;
+assign DATA[38]     = TRDY_IO;
+assign DATA[39]     = IRDY_IO;
+assign DATA[40]     = STOP_IO;
+assign DATA[41]     = DEVSEL_IO;
+assign DATA[42]     = IDSEL_I;
+assign DATA[43]     = INTA_O;
+assign DATA[44]     = PERR_IO;
+assign DATA[45]     = SERR_IO;
+assign DATA[46]     = REQ_O;
+assign DATA[47]     = GNT_I;
+assign DATA[50:48]  = target_current_state;
+assign DATA[53:51]  = initiator_current_state;
+assign DATA[54]     = AD_Hiz;
+assign DATA[55]     = PCIMSTAD_Hiz;
+assign DATA[56]     = PAR_Hiz;
+assign DATA[57]     = PAR_Port;
+assign DATA[58]     = INI_PAR;
+assign DATA[59]     = TGT_PAR;
+assign DATA[63:60]  = DEVSEL_Count[3:0];
+assign TRIG[ 0]     = FRAME_IO;
+assign TRIG[ 1]     = MST_Start;
+assign TRIG[ 2]     = 1'b0;
+assign TRIG[ 3]     = 1'b0;
+assign TRIG[ 4]     = 1'b0;
+assign TRIG[ 5]     = 1'b0;
+assign TRIG[ 6]     = 1'b0;
+assign TRIG[ 7]     = 1'b0;
 
 endmodule
