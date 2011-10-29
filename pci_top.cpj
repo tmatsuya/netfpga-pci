@@ -1,5 +1,5 @@
 #ChipScope Pro Analyzer Project File, Version 3.0
-#Sat Oct 29 16:20:24 JST 2011
+#Sat Oct 29 21:13:14 JST 2011
 device.0.configFileDir=/home/tmatsuya/Dropbox/fpga/ip-bus/netfpga/pci
 device.0.configFilename=pci_top.bit
 device.1.configFileDir=/home/tmatsuya/Dropbox/fpga/ip-bus/netfpga/pci
@@ -399,17 +399,17 @@ unit.0.0.port.-1.s.55.color=java.awt.Color[r\=0,g\=0,b\=124]
 unit.0.0.port.-1.s.55.name=DataPort[55]
 unit.0.0.port.-1.s.55.orderindex=-1
 unit.0.0.port.-1.s.55.visible=1
-unit.0.0.port.-1.s.56.alias=PAR_Hiz
+unit.0.0.port.-1.s.56.alias=/MST_Start
 unit.0.0.port.-1.s.56.color=java.awt.Color[r\=0,g\=0,b\=124]
 unit.0.0.port.-1.s.56.name=DataPort[56]
 unit.0.0.port.-1.s.56.orderindex=-1
 unit.0.0.port.-1.s.56.visible=1
-unit.0.0.port.-1.s.57.alias=PAR_Port
+unit.0.0.port.-1.s.57.alias=/Empty
 unit.0.0.port.-1.s.57.color=java.awt.Color[r\=0,g\=0,b\=124]
 unit.0.0.port.-1.s.57.name=DataPort[57]
 unit.0.0.port.-1.s.57.orderindex=-1
 unit.0.0.port.-1.s.57.visible=1
-unit.0.0.port.-1.s.58.alias=INI_PAR
+unit.0.0.port.-1.s.58.alias=/readen
 unit.0.0.port.-1.s.58.color=java.awt.Color[r\=0,g\=0,b\=124]
 unit.0.0.port.-1.s.58.name=DataPort[58]
 unit.0.0.port.-1.s.58.orderindex=-1
@@ -549,15 +549,15 @@ unit.0.0.waveform.posn.13.name=PCIMSTAD_Hiz
 unit.0.0.waveform.posn.13.radix=1
 unit.0.0.waveform.posn.13.type=signal
 unit.0.0.waveform.posn.14.channel=56
-unit.0.0.waveform.posn.14.name=PAR_Hiz
+unit.0.0.waveform.posn.14.name=/MST_Start
 unit.0.0.waveform.posn.14.radix=1
 unit.0.0.waveform.posn.14.type=signal
 unit.0.0.waveform.posn.15.channel=57
-unit.0.0.waveform.posn.15.name=PAR_Port
+unit.0.0.waveform.posn.15.name=/Empty
 unit.0.0.waveform.posn.15.radix=1
 unit.0.0.waveform.posn.15.type=signal
 unit.0.0.waveform.posn.16.channel=58
-unit.0.0.waveform.posn.16.name=INI_PAR
+unit.0.0.waveform.posn.16.name=/readen
 unit.0.0.waveform.posn.16.radix=1
 unit.0.0.waveform.posn.16.type=signal
 unit.0.0.waveform.posn.17.channel=59

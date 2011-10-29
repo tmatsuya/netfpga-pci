@@ -11,12 +11,13 @@
 
 ***********************************************************************/
 //`define ENABLE_EXPROM
+`define ENABLE_EXTBUS
 
 module pci_top (
 	inout         RST_I,
 	input         PCLK,
 
-	inout  [31:0] AD_IO,             // PCI Ports -- do not modify names!
+	inout  [31:0] AD_IO,            // PCI Ports -- do not modify names!
 	inout   [3:0] CBE_IO,
 	inout         PAR_IO,
 	inout         FRAME_IO,
@@ -30,8 +31,16 @@ module pci_top (
 	inout         SERR_IO,
 	output        REQ_O,
 	input         GNT_I,
+
+	input         cpci_clk,		// Virtex 2 Pro BUS
+	output        cpci_reset,
+	input  [31:0] cpci_addr,
+	input  [31:0] cpci_data,
+	output        cpci_rd_rdy,
+	output        cpci_wr_rdy,
+	input         cpci_req,
+
 	output        LED
-				
 );
 
 //-----------------------------------
@@ -179,6 +188,55 @@ rom rom_inst (
 `else
 	assign dout[31:0] = 32'hcdab3412;
 `endif
+
+//-----------------------------------
+// Asynchronous FIFO
+//-----------------------------------
+wire [63:0] dataout;
+wire empty;
+reg readen = 1'b0;
+wire full_out;
+asfifo #(
+		.DATA_WIDTH(64),
+		.ADDRESS_WIDTH(4)
+) asfifo1_inst (
+	.Data_out(dataout),
+	.Empty_out(empty),
+	.ReadEn_in(readen),
+	.RClk(PCLK),
+
+	.Data_in({cpci_addr[31:0], cpci_data[31:0]}),
+	.Full_out(full_out),
+	.WriteEn_in(~cpci_req),
+	.WClk(cpci_clk),
+	.Clear_in(~RST_I)
+);
+assign cpci_wr_rdy = ~full_out;
+
+always @(posedge PCLK) begin
+	if (~RST_I) begin
+		MST_Start     <= 1'b0;
+		MST_Address   <= 30'h0;
+		MST_WriteData <= 32'h0;
+		readen        <= 1'b0;
+	end else begin
+		if (readen) begin
+			readen              <= 1'b0;
+			MST_Address[31:2]   <= dataout[63:34];
+			MST_WriteData[31:0] <= dataout[32:0];
+			MST_Start           <= 1'b1;
+		end else begin
+			readen <= 1'b0;
+			if (initiator_next_state == INI_IDLE & ~Retry & ~MST_Start) begin
+				if (~empty) begin
+					MST_Start <= 1'b1;
+					readen    <= 1'b1;
+				end
+			end else if (initiator_next_state == INI_TURN_AROUND & ~Retry)
+				MST_Start <= 1'b0;
+		end
+	end
+end
 
 //-----------------------------------
 // Target
@@ -445,9 +503,11 @@ always @(posedge PCLK) begin
 		CFG_Sta_MAbt_Clr <= 1'b0;
 		CFG_Sta_TAbt_Clr <= 1'b0;
 		// Initiator Registers
+`ifndef ENABLE_EXTBUS
 		MST_Start     <= 1'b0;
 		MST_Address   <= 30'h0;
 		MST_WriteData <= 32'h0;
+`endif
 		MST_IntStat   <= 1'b0;
 		MST_IntClr    <= 1'b0;
 		MST_IntMask   <= 1'b0;
@@ -482,6 +542,7 @@ always @(posedge PCLK) begin
 							AD_Port[31:0] <= 32'hcdab3412;
 					endcase
 				end else begin
+`ifndef ENABLE_EXTBUS
 					case (PCI_Address[4:2])
 						3'b000: begin
 							if (~CBE_IO[3]) begin
@@ -516,6 +577,7 @@ always @(posedge PCLK) begin
 						default:
 							LED_Port <= AD_IO[0];
 					endcase
+`endif
 				end
 				Local_DTACK <= 1'b1;
 				seq_next_state <= SEQ_COMPLETE;
@@ -665,6 +727,7 @@ always @(posedge PCLK) begin
 	end
 end
 
+// PCI BUS
 assign CBE_IO    = CBE_Hiz   ? 4'hz : CBE_Port;
 assign AD_IO     = (AD_Hiz & PCIMSTAD_Hiz) ? 32'hz : (AD_Hiz ? PCIMSTAD_Port : AD_Port);
 assign PAR_IO    = PAR_Hiz   ? 1'hz : PAR_Port;
@@ -676,6 +739,10 @@ assign DEVSEL_IO = DEVSEL_Hiz? 1'hz : DEVSEL_Port;
 assign INTA_O    = 1'hz;
 assign REQ_O     = REQ_Port;
 assign LED       = ~LED_Port;
+
+// Virtex 2 Pro BUS
+assign cpci_reset = RST_I;
+assign cpci_rd_rdy = 1'b1;
 
 //-----------------------------------
 // Chipscope Pro Module
@@ -710,9 +777,9 @@ assign DATA[50:48]  = target_next_state;
 assign DATA[53:51]  = initiator_next_state;
 assign DATA[54]     = AD_Hiz;
 assign DATA[55]     = PCIMSTAD_Hiz;
-assign DATA[56]     = PAR_Hiz;
-assign DATA[57]     = PAR_Port;
-assign DATA[58]     = INI_PAR;
+assign DATA[56]     = MST_Start;
+assign DATA[57]     = empty;
+assign DATA[58]     = readen;
 assign DATA[59]     = TGT_PAR;
 assign DATA[63:60]  = DEVSEL_Count[3:0];
 assign TRIG[ 0]     = FRAME_IO;
