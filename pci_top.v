@@ -105,13 +105,13 @@ parameter TGT_DISCONNECT	= 3'h6;
 parameter TGT_TURN_AROUND	= 3'h7;
 
 parameter INI_IDLE		= 3'h0;
-parameter INI_BUS_PARK		= 3'h1;
-parameter INI_WAIT_GNT		= 3'h2;
-parameter INI_ADDR2DATA		= 3'h3;
-parameter INI_WAIT_DEVSEL	= 3'h4;
-parameter INI_WAIT_COMPLETE	= 3'h5;
-parameter INI_ABORT		= 3'h6;
-parameter INI_TURN_AROUND	= 3'h7;
+//parameter INI_BUS_PARK	= 3'h1;
+parameter INI_WAIT_GNT		= 3'h1;
+parameter INI_ADDR2DATA		= 3'h2;
+parameter INI_WAIT_DEVSEL	= 3'h3;
+parameter INI_WAIT_COMPLETE	= 3'h4;
+parameter INI_ABORT		= 3'h5;
+parameter INI_TURN_AROUND	= 3'h6;
 
 parameter SEQ_IDLE		= 3'b000;
 parameter SEQ_IO_ACCESS		= 3'b001;
@@ -120,9 +120,9 @@ parameter SEQ_CFG_ACCESS	= 3'b011;
 parameter SEQ_ROM_ACCESS	= 3'b100;
 parameter SEQ_COMPLETE		= 3'b111;
 
-reg [2:0] target_current_state = TGT_IDLE, target_next_state = TGT_IDLE;
-reg [2:0] initiator_current_state = INI_IDLE, initiator_next_state = INI_IDLE;
-reg [2:0] seq_current_state = SEQ_IDLE, seq_next_state = SEQ_IDLE;
+reg [2:0] target_next_state = TGT_IDLE;
+reg [2:0] initiator_next_state = INI_IDLE;
+reg [2:0] seq_next_state = SEQ_IDLE;
 
 //-----------------------------------
 // PCI configuration parameter/registers
@@ -185,7 +185,6 @@ rom rom_inst (
 //-----------------------------------
 always @(posedge PCLK) begin
 	if (~RST_I) begin
-		target_current_state <= TGT_IDLE;
 		target_next_state <= TGT_IDLE;
 		AD_Hiz <= 1'b1;
 		DEVSEL_Hiz <= 1'b1;
@@ -199,11 +198,10 @@ always @(posedge PCLK) begin
 		PCI_IDSel <= 1'b0;
 		Local_Bus_Start <= 1'b0;
 	end else begin
-		target_current_state <= target_next_state;
-		case (target_current_state)
+		case (target_next_state)
 			TGT_IDLE: begin
 //				if (~FRAME_IO & IRDY_IO) begin
-				if (~FRAME_IO & IRDY_IO && initiator_current_state == INI_IDLE) begin
+				if (~FRAME_IO & IRDY_IO && initiator_next_state == INI_IDLE) begin
 					PCI_BusCommand <= CBE_IO;
 					PCI_Address <= AD_IO;
 					PCI_IDSel <= IDSEL_I;
@@ -292,7 +290,6 @@ end
 
 always @(posedge PCLK) begin
 	if (~RST_I) begin
-		initiator_current_state <= INI_IDLE;
 		initiator_next_state <= INI_IDLE;
 		// Initiator Registers
 		PCIMSTAD_Hiz         <= 1'b1;
@@ -308,12 +305,11 @@ always @(posedge PCLK) begin
 		DEVSEL_Count         <= 4'd0;
 		Retry                <= 1'b0;
 	end else begin
-		initiator_current_state <= initiator_next_state;
-		case (initiator_current_state)
+		case (initiator_next_state)
 			INI_IDLE: begin
 				if (CFG_Cmd_Mst) begin
 //					if (MST_Start | Retry) begin
-					if ((MST_Start | Retry) & target_current_state == TGT_IDLE) begin
+					if ((MST_Start | Retry) & target_next_state == TGT_IDLE) begin
 						MST_Busy <= 1'b1;
 						if (~GNT_I & FRAME_IO & IRDY_IO) begin
 							PCIMSTAD_Hiz <= 1'b0;
@@ -436,7 +432,6 @@ end
 //-----------------------------------
 always @(posedge PCLK) begin
 	if (~RST_I) begin
-		seq_current_state <= SEQ_IDLE;
 		seq_next_state <= SEQ_IDLE;
 		AD_Port <= 32'h0;
 		// Configurartion Register
@@ -461,11 +456,10 @@ always @(posedge PCLK) begin
 
 		Local_DTACK <= 1'b0;
 	end else begin
-		seq_current_state <= seq_next_state;
 if (initiator_next_state == INI_WAIT_DEVSEL)
 MST_Start     <= 1'b0;
 
-		case (seq_current_state)
+		case (seq_next_state)
 			SEQ_IDLE: begin
 				if (Local_Bus_Start) begin
 					if (Hit_IO)
@@ -713,12 +707,12 @@ assign DATA[40]     = STOP_IO;
 assign DATA[41]     = DEVSEL_IO;
 assign DATA[42]     = IDSEL_I;
 assign DATA[43]     = INTA_O;
-assign DATA[44]     = PERR_IO;
+assign DATA[44]     = TRDY_Hiz;
 assign DATA[45]     = SERR_IO;
 assign DATA[46]     = REQ_O;
 assign DATA[47]     = GNT_I;
-assign DATA[50:48]  = target_current_state;
-assign DATA[53:51]  = initiator_current_state;
+assign DATA[50:48]  = target_next_state;
+assign DATA[53:51]  = initiator_next_state;
 assign DATA[54]     = AD_Hiz;
 assign DATA[55]     = PCIMSTAD_Hiz;
 assign DATA[56]     = PAR_Hiz;
