@@ -200,8 +200,7 @@ always @(posedge PCLK) begin
 	end else begin
 		case (target_next_state)
 			TGT_IDLE: begin
-//				if (~FRAME_IO & IRDY_IO) begin
-				if (~FRAME_IO & IRDY_IO && initiator_next_state == INI_IDLE) begin
+				if (~FRAME_IO & IRDY_IO) begin
 					PCI_BusCommand <= CBE_IO;
 					PCI_Address <= AD_IO;
 					PCI_IDSel <= IDSEL_I;
@@ -308,8 +307,7 @@ always @(posedge PCLK) begin
 		case (initiator_next_state)
 			INI_IDLE: begin
 				if (CFG_Cmd_Mst) begin
-//					if (MST_Start | Retry) begin
-					if ((MST_Start | Retry) & target_next_state == TGT_IDLE) begin
+					if (MST_Start | Retry) begin
 						MST_Busy <= 1'b1;
 						if (~GNT_I & FRAME_IO & IRDY_IO) begin
 							PCIMSTAD_Hiz <= 1'b0;
@@ -456,9 +454,6 @@ always @(posedge PCLK) begin
 
 		Local_DTACK <= 1'b0;
 	end else begin
-if (initiator_next_state == INI_WAIT_DEVSEL)
-MST_Start     <= 1'b0;
-
 		case (seq_next_state)
 			SEQ_IDLE: begin
 				if (Local_Bus_Start) begin
