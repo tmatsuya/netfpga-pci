@@ -40,6 +40,16 @@ module pci_top (
 	output        cpci_wr_rdy,
 	input         cpci_req,
 
+	output        rp_cclk,		// Reprogramming signals
+	output        rp_prog_b,
+	input         rp_init_b,
+	output        rp_cs_b,
+	output        rp_rdwr_b,
+	output [7:0]  rp_data,
+	input         rp_done,
+
+	output        allow_reprog,	// Allow reprogramming
+
 	output        LED
 );
 
@@ -225,8 +235,8 @@ always @(posedge PCLK) begin
 			MST_Address[31:2]   <= dataout[63:34];
 			MST_WriteData[31:0] <= dataout[32:0];
 			MST_Start           <= 1'b1;
+			MST_ReadWrite       <= 1'b1;
 		end else begin
-			readen <= 1'b0;
 			if (initiator_next_state == INI_IDLE & ~Retry & ~MST_Start) begin
 				if (~empty) begin
 					MST_Start <= 1'b1;
@@ -743,6 +753,14 @@ assign LED       = ~LED_Port;
 // Virtex 2 Pro BUS
 assign cpci_reset = RST_I;
 assign cpci_rd_rdy = 1'b1;
+
+// Reprograming singnals
+assign rp_cclk = 1'bz;
+assign rp_prog_b = 1'bz;
+assign rp_cs_b = 1'bz;
+assign rp_rdwr_b = 1'b0;
+assign rp_data = 8'bz;
+assign allow_reprog = 1'bz;
 
 //-----------------------------------
 // Chipscope Pro Module

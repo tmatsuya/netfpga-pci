@@ -311,3 +311,21 @@ NET "cpci_req"  LOC = "F12" | IOSTANDARD = LVCMOS2 ;
 NET "cpci_wr_rdy"  LOC = "E12" | IOSTANDARD = LVCMOS2 ;
 NET "cpci_clk"  LOC = "W12" | IOSTANDARD = LVCMOS2 ;
 
+################################################################################
+# Configuration PINS
+################################################################################
+NET "rp_cclk"      LOC = "Y14" | IOSTANDARD = LVCMOS2 ;
+NET "rp_cs_b"      LOC = "AA14" | IOSTANDARD = LVCMOS2 ;
+NET "rp_data<0>"   LOC = "V13" | IOSTANDARD = LVCMOS2 ;
+NET "rp_data<1>"   LOC = "W14" | IOSTANDARD = LVCMOS2 ;
+NET "rp_data<2>"   LOC = "V14" | IOSTANDARD = LVCMOS2 ;
+NET "rp_data<3>"   LOC = "AA15" | IOSTANDARD = LVCMOS2 ;
+NET "rp_data<4>"   LOC = "AB16" | IOSTANDARD = LVCMOS2 ;
+NET "rp_data<5>"   LOC = "Y15" | IOSTANDARD = LVCMOS2 ;
+NET "rp_data<6>"   LOC = "W15" | IOSTANDARD = LVCMOS2 ;
+NET "rp_data<7>"   LOC = "AB15" | IOSTANDARD = LVCMOS2 ;
+NET "rp_done"      LOC = "V16" | IOSTANDARD = LVCMOS2 ;
+NET "rp_init_b"    LOC = "W16" | IOSTANDARD = LVCMOS2 ;
+NET "rp_prog_b"    LOC = "V15" | IOSTANDARD = LVCMOS2 ;
+NET "rp_rdwr_b"    LOC = "Y16" | IOSTANDARD = LVCMOS2 ;
+NET "allow_reprog" LOC = "D12" | IOSTANDARD = LVCMOS2 ;
