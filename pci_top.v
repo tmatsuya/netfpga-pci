@@ -10,7 +10,7 @@
   Copyright (c) 2011 macchan@sfc.wide.ad.jp, Inc.  All rights reserved.
 
 ***********************************************************************/
-//`define ENABLE_EXPROM
+`define ENABLE_EXPROM
 `define ENABLE_EXTBUS
 
 module pci_top (
@@ -52,6 +52,11 @@ module pci_top (
 
 	output        LED
 );
+
+assign reset = ~RST_I;
+wire pclk_ibuf, pclk;
+IBUF ibuf_pclk (.I(PCLK),  .O(pclk_ibuf));
+BUFG bufg_pclk (.I(pclk_ibuf), .O(pclk));
 
 //-----------------------------------
 // PCI register
@@ -191,7 +196,7 @@ rom rom_inst (
         .dinp(dinp),
         .wren(1'b0),
         .address(PCI_Address[10:2]),
-        .clk(PCLK),
+        .clk(pclk),
         .enable(Hit_ExpROM|Hit_Memory),
         .dout(dout)
 );
@@ -213,20 +218,21 @@ asfifo #(
 	.Data_out(dataout),
 	.Empty_out(empty),
 	.ReadEn_in(readen),
-	.RClk(PCLK),
+	.RClk(pclk),
 
 	.Data_in({cpci_addr[31:0], cpci_data[31:0]}),
 	.Full_out(full_out),
 	.WriteEn_in(~cpci_req),
 	.WClk(cpci_clk),
-	.Clear_in(~RST_I)
+	.Clear_in(reset)
 );
 assign cpci_wr_rdy = ~full_out;
 
-always @(posedge PCLK) begin
-	if (~RST_I) begin
+always @(posedge pclk) begin
+	if (reset) begin
 		MST_Start     <= 1'b0;
 		MST_Address   <= 30'h0;
+		MST_ReadWrite <= 1'b0;
 		MST_WriteData <= 32'h0;
 		readen        <= 1'b0;
 	end else begin
@@ -251,8 +257,8 @@ end
 //-----------------------------------
 // Target
 //-----------------------------------
-always @(posedge PCLK) begin
-	if (~RST_I) begin
+always @(posedge pclk) begin
+	if (reset) begin
 		target_next_state <= TGT_IDLE;
 		AD_Hiz <= 1'b1;
 		DEVSEL_Hiz <= 1'b1;
@@ -342,8 +348,8 @@ end
 assign PCIMSTAD_Port = ~FRAME_Port ? {MST_Address, 2'b00} : MST_WriteData;
 assign CBE_Port      = ~FRAME_Port ? {PCI_MEM_CYCLE, MST_ReadWrite} : 4'b0000;
 
-always @(posedge PCLK) begin
-	if (~RST_I) begin
+always @(posedge pclk) begin
+	if (reset) begin
 		MST_ReadData <= 32'hffffffff;
 	end else begin
 		if (MST_Abort) begin
@@ -355,8 +361,8 @@ always @(posedge PCLK) begin
 	end
 end
 
-always @(posedge PCLK) begin
-	if (~RST_I) begin
+always @(posedge pclk) begin
+	if (reset) begin
 		initiator_next_state <= INI_IDLE;
 		// Initiator Registers
 		PCIMSTAD_Hiz         <= 1'b1;
@@ -496,8 +502,8 @@ end
 //-----------------------------------
 // Sequencer
 //-----------------------------------
-always @(posedge PCLK) begin
-	if (~RST_I) begin
+always @(posedge pclk) begin
+	if (reset) begin
 		seq_next_state <= SEQ_IDLE;
 		AD_Port <= 32'h0;
 		// Configurartion Register
@@ -721,8 +727,8 @@ assign TGT_PAR = TGT_temp_PAR_DB ^ TGT_temp_PAR_CBE;
 assign INI_temp_PAR_DB  = ^PCIMSTAD_Port;
 assign INI_temp_PAR_CBE = ^CBE_Port;
 assign INI_PAR = INI_temp_PAR_DB ^ INI_temp_PAR_CBE;
-always @(posedge PCLK) begin
-	if (~RST_I) begin
+always @(posedge pclk) begin
+	if (reset) begin
 		PAR_Hiz   <= 1'b1;
 		PAR_Port  <= 1'b0;
 	end else begin
@@ -751,7 +757,7 @@ assign REQ_O     = REQ_Port;
 assign LED       = ~LED_Port;
 
 // Virtex 2 Pro BUS
-assign cpci_reset = RST_I;
+assign cpci_reset = reset;
 assign cpci_rd_rdy = 1'b1;
 
 // Reprograming singnals
@@ -772,7 +778,7 @@ cs_icon INST_ICON (
 	.CONTROL0(CONTROL)
 );
 cs_ila INST_ILA (
-	.CLK(PCLK),
+	.CLK(pclk),
 	.CONTROL(CONTROL),
 	.TRIG0(TRIG),
 	.DATA(DATA)
