@@ -14,7 +14,7 @@
 `define ENABLE_EXTBUS
 
 module pci_top (
-	inout         RST_I,
+	input         RST_I,
 	input         PCLK,
 
 	inout  [31:0] AD_IO,            // PCI Ports -- do not modify names!
@@ -32,13 +32,19 @@ module pci_top (
 	output        REQ_O,
 	input         GNT_I,
 
-	input         cpci_clk,		// Virtex 2 Pro BUS
+	input         cpci_clk,		// CPCI
 	output        cpci_reset,
-	input  [31:0] cpci_addr,
+
+	input  [31:0] cpci_addr,	// CPCI-1
 	input  [31:0] cpci_data,
 	output        cpci_rd_rdy,
 	output        cpci_wr_rdy,
 	input         cpci_req,
+
+	output [31:0] cpci_debug_data,	// CPCI-2
+	output [31:0] cpci_dma_data,
+	output        cpci_dma_wr_en,
+	input         cnet_err,
 
 	output        rp_cclk,		// Reprogramming signals
 	output        rp_prog_b,
@@ -49,6 +55,10 @@ module pci_top (
 	input         rp_done,
 
 	output        allow_reprog,	// Allow reprogramming
+
+	input         cpci_jmpr,
+	input [3:0]   cpci_id,
+	output [3:0]  cpci_tx_full,
 
 	output        LED
 );
@@ -253,6 +263,10 @@ always @(posedge pclk) begin
 		end
 	end
 end
+
+assign cpci_debug_data = 32'hf0000000;
+assign cpci_dma_data   = 32'h12345678;
+assign cpci_dma_wr_en  = 1'b0;
 
 //-----------------------------------
 // Target
@@ -767,6 +781,9 @@ assign rp_cs_b = 1'bz;
 assign rp_rdwr_b = 1'b0;
 assign rp_data = 8'bz;
 assign allow_reprog = 1'bz;
+
+// Switch
+assign cpci_tx_full =  cpci_id;
 
 //-----------------------------------
 // Chipscope Pro Module

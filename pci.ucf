@@ -383,12 +383,10 @@ NET "cpci_tx_full<0>"  LOC = "C13" | IOSTANDARD=LVCMOS2;
 NET "cpci_tx_full<1>"  LOC = "A13" | IOSTANDARD=LVCMOS2;
 NET "cpci_tx_full<2>"  LOC = "B13" | IOSTANDARD=LVCMOS2;#used by cpci_dma_vld_c2n
 NET "cpci_tx_full<3>"  LOC = "D13" | IOSTANDARD=LVCMOS2;#used by dma_q_nearly_full_n2c
+NET "cnet_err"         LOC = "AB14"| IOSTANDARD=LVCMOS2;#used by dma_q_nearly_full_n2c
 
 ################################################################################
 # Configuration PINS
-################################################################################
-# CPCI
-################################################################################
 ################################################################################
 NET "rp_cclk"      LOC = "Y14" | IOSTANDARD = LVCMOS2 ;
 NET "rp_cs_b"      LOC = "AA14" | IOSTANDARD = LVCMOS2 ;
@@ -405,3 +403,12 @@ NET "rp_init_b"    LOC = "W16" | IOSTANDARD = LVCMOS2 ;
 NET "rp_prog_b"    LOC = "V15" | IOSTANDARD = LVCMOS2 ;
 NET "rp_rdwr_b"    LOC = "Y16" | IOSTANDARD = LVCMOS2 ;
 NET "allow_reprog" LOC = "D12" | IOSTANDARD = LVCMOS2 ;
+
+################################################################################
+# SWITCH
+################################################################################
+NET "cpci_jmpr"    LOC = "C12" | IOSTANDARD = LVCMOS2 ;
+NET "cpci_id<0>"   LOC = "AA5" | IOSTANDARD = LVCMOS2 ;
+NET "cpci_id<1>"   LOC = "AB4" | IOSTANDARD = LVCMOS2 ;
+NET "cpci_id<2>"   LOC = "AA4" | IOSTANDARD = LVCMOS2 ;
+NET "cpci_id<3>"   LOC = "AB3" | IOSTANDARD = LVCMOS2 ;
