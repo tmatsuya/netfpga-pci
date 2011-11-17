@@ -113,7 +113,7 @@ reg MST_IntMask          = 1'b0;
 reg [3:0] DEVSEL_Count   = 4'd0;
 reg Retry                = 1'b0;
 
-reg [31:2] MST_Address   = 30'h3c000000;
+wire [31:2] MST_Address;
 reg [31:0] MST_WriteData = 32'h0;
 reg [31:0] MST_ReadData  = 32'h0;
 reg [31:2] MST_MemStart  = 30'h3c000000;
@@ -241,7 +241,11 @@ asfifo #(
 );
 assign cpci_wr_rdy = ~full_out;
 
+reg [31:2] MST_ReadAddr  = 30'h3c000000;
+reg [31:2] MST_WriteAddr = 30'h3c000000;
+
 wire full_out2;
+reg fifo2_wen = 1'b0;
 asfifo #(
 		.DATA_WIDTH(64),
 		.ADDRESS_WIDTH(4)
@@ -251,7 +255,7 @@ asfifo #(
 	.ReadEn_in(~cpci_dma_wr_en),
 	.RClk(cpci_clk),
 
-	.Data_in({MST_Address[31:2], 2'b0, MST_ReadData[31:0]}),
+	.Data_in({MST_ReadAddr[31:2], 2'b0, MST_ReadData[31:0]}),
 	.Full_out(full_out2),
 	.WriteEn_in(1'b0),
 	.WClk(pclk),
@@ -259,6 +263,79 @@ asfifo #(
 );
 
 
+//-----------------------------------
+// Systetm Sequencer
+//-----------------------------------
+assign MST_Address = MST_ReadWrite ? MST_WriteAddr : MST_ReadAddr;
+
+reg [2:0] sys_next_state = 3'h0;
+parameter SYS_IDLE		= 3'b000;
+parameter SYS_READ1		= 3'b001;
+parameter SYS_READ2		= 3'b010;
+parameter SYS_WRITE1		= 3'b011;
+parameter SYS_WRITE2		= 3'b100;
+
+always @(posedge pclk) begin
+	if (reset) begin
+		sys_next_state <= SYS_IDLE;
+		MST_Start     <= 1'b0;
+		MST_ReadAddr  <= 30'h3c000000;
+		MST_WriteAddr <= 30'h3c000000;
+		MST_ReadWrite <= 1'b0;
+		MST_WriteData <= 32'h0;
+		readen        <= 1'b0;
+		fifo2_wen     <= 1'b0;
+	end else begin
+		readen        <= 1'b0;
+		fifo2_wen     <= 1'b0;
+		case (sys_next_state)
+			SYS_IDLE: begin
+				if (MST_ReadAddr < MST_MemStart || MST_ReadAddr >= MST_MemEnd)
+					MST_ReadAddr <= MST_MemStart;
+				if (initiator_next_state == INI_IDLE & ~Retry) begin
+					if (empty == 1'b1) begin
+`ifdef 0
+						if (~full_out2) begin
+							MST_Start      <= 1'b1;
+							MST_ReadWrite  <= 1'b0;
+							sys_next_state <= SYS_READ1;
+						end
+`endif
+					end else begin
+						MST_Start      <= 1'b1;
+						readen         <= 1'b1;
+						MST_ReadWrite  <= 1'b1;
+						sys_next_state <= SYS_WRITE1;
+					end
+				end
+			end
+			SYS_READ1: begin
+				if (initiator_next_state == INI_TURN_AROUND & ~Retry) begin
+					fifo2_wen      <= 1'b1;
+					MST_Start      <= 1'b0;
+					sys_next_state <= SYS_READ2;
+				end
+			end
+			SYS_READ2: begin
+				MST_ReadAddr   <= MST_ReadAddr + 4;
+				sys_next_state <= SYS_IDLE;
+			end
+			SYS_WRITE1: begin
+				MST_WriteAddr[31:2] <= dataout[63:34];
+				MST_WriteData[31:0] <= dataout[31:0];
+				sys_next_state <= SYS_WRITE2;
+			end
+			SYS_WRITE2: begin
+				if (initiator_next_state == INI_TURN_AROUND & ~Retry) begin
+					MST_Start      <= 1'b0;
+					sys_next_state <= SYS_IDLE;
+				end
+			end
+		endcase
+	end
+end
+
+`ifdef 0
 always @(posedge pclk) begin
 	if (reset) begin
 		MST_Start     <= 1'b0;
@@ -270,7 +347,7 @@ always @(posedge pclk) begin
 		if (readen) begin
 			readen              <= 1'b0;
 			MST_Address[31:2]   <= dataout[63:34];
-			MST_WriteData[31:0] <= dataout[32:0];
+			MST_WriteData[31:0] <= dataout[31:0];
 			MST_Start           <= 1'b1;
 			MST_ReadWrite       <= 1'b1;
 		end else begin
@@ -284,6 +361,7 @@ always @(posedge pclk) begin
 		end
 	end
 end
+`endif
 
 //-----------------------------------
 // Target
