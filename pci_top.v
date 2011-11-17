@@ -103,6 +103,7 @@ reg PAR_Port             = 1'b0;
 // Initiator register
 //-----------------------------------
 reg MST_Start            = 1'b0;
+reg MST_Enable           = 1'b1;
 reg MST_Busy             = 1'b0;
 reg MST_ReadWrite        = 1'b0;
 reg MST_Abort            = 1'b0;
@@ -117,7 +118,7 @@ wire [31:2] MST_Address;
 reg [31:0] MST_WriteData = 32'h0;
 reg [31:0] MST_ReadData  = 32'h0;
 reg [31:2] MST_MemStart  = 30'h0;
-reg [31:2] MST_MemEnd    = 30'h0;
+reg [31:2] MST_MemEnd    = 30'h200;
 reg [31:2] MST_MemOffset = 30'h0;
 
 reg LED_Port             = 1'b0;
@@ -292,7 +293,7 @@ always @(posedge pclk) begin
 			SYS_IDLE: begin
 				if (MST_ReadAddr < MST_MemStart || MST_ReadAddr >= MST_MemEnd)
 					MST_ReadAddr <= MST_MemStart;
-				if (initiator_next_state == INI_IDLE && ~Retry) begin
+				if (initiator_next_state == INI_IDLE && ~Retry && MST_Enable) begin
 					if (empty == 1'b1) begin
 						if (~full_out2) begin
 							MST_Start      <= 1'b1;
@@ -598,11 +599,7 @@ always @(posedge pclk) begin
 		CFG_Sta_MAbt_Clr <= 1'b0;
 		CFG_Sta_TAbt_Clr <= 1'b0;
 		// Initiator Registers
-`ifndef ENABLE_EXTBUS
-		MST_Start     <= 1'b0;
-		MST_Address   <= 30'h3c000000;
-		MST_WriteData <= 32'h0;
-`endif
+		MST_Enable    <= 1'b1;
 		MST_IntStat   <= 1'b0;
 		MST_IntClr    <= 1'b0;
 		MST_IntMask   <= 1'b0;
@@ -632,24 +629,17 @@ always @(posedge pclk) begin
 				if (~PCI_BusCommand[0]) begin
 					case (PCI_Address[4:2])
 						3'b000:
-							AD_Port[31:0] <= {MST_IntStat,MST_IntMask,14'b0,MST_Abort,TGT_Abort,12'b0,MST_ReadWrite,MST_Busy};
+							AD_Port[31:0] <= {MST_IntStat,MST_IntMask,14'b0,MST_Abort,TGT_Abort,12'b0,MST_Busy,MST_Enable};
 						3'b001:
-							AD_Port[31:0] <= {MST_Address, 2'b00};
-						3'b010:
-							AD_Port[31:0] <= MST_ReadData;
-						3'b011:
-							AD_Port[31:0] <= MST_WriteData;
-						3'b100:
 							AD_Port[31:0] <= {MST_MemStart, 2'b00};
-						3'b101:
+						3'b010:
 							AD_Port[31:0] <= {MST_MemEnd, 2'b00};
-						3'b110:
+						3'b011:
 							AD_Port[31:0] <= {MST_MemOffset, 2'b00};
 						default:
 							AD_Port[31:0] <= 32'hcdab3412;
 					endcase
 				end else begin
-`ifndef ENABLE_EXTBUS
 					case (PCI_Address[4:2])
 						3'b000: begin
 							if (~CBE_IO[3]) begin
@@ -657,33 +647,11 @@ always @(posedge pclk) begin
 								MST_IntMask <= AD_IO[30];
 							end
 							if (~CBE_IO[0]) begin
-								MST_ReadWrite <= AD_IO[1];
-								MST_Start     <= AD_IO[0];
+								MST_Enable    <= AD_IO[0];
 							end
 						end
-`ifdef 0
 						3'b001: begin
-							if (~CBE_IO[3])
-								MST_Address[31:24] <= AD_IO[31:24];
-							if (~CBE_IO[2])
-								MST_Address[23:16] <= AD_IO[23:16];
-							if (~CBE_IO[1])
-								MST_Address[15: 8] <= AD_IO[15: 8];
-							if (~CBE_IO[0])
-								MST_Address[ 7: 2] <= AD_IO[ 7: 2];
-						end
-`endif
-						3'b011: begin
-							if (~CBE_IO[3])
-								MST_WriteData[31:24] <= AD_IO[31:24];
-							if (~CBE_IO[2])
-								MST_WriteData[23:16] <= AD_IO[23:16];
-							if (~CBE_IO[1])
-								MST_WriteData[15: 8] <= AD_IO[15: 8];
-							if (~CBE_IO[0])
-								MST_WriteData[ 7: 0] <= AD_IO[ 7: 0];
-						end
-						3'b100: begin
+							MST_Enable    <= 1'b0;
 							if (~CBE_IO[3])
 								MST_MemStart[31:24] <= AD_IO[31:24];
 							if (~CBE_IO[2])
@@ -693,7 +661,8 @@ always @(posedge pclk) begin
 							if (~CBE_IO[0])
 								MST_MemStart[ 7: 2] <= AD_IO[ 7: 2];
 						end
-						3'b101: begin
+						3'b010: begin
+							MST_Enable    <= 1'b0;
 							if (~CBE_IO[3])
 								MST_MemEnd[31:24] <= AD_IO[31:24];
 							if (~CBE_IO[2])
@@ -703,7 +672,8 @@ always @(posedge pclk) begin
 							if (~CBE_IO[0])
 								MST_MemEnd[ 7: 2] <= AD_IO[ 7: 2];
 						end
-						3'b110: begin
+						3'b011: begin
+							MST_Enable    <= 1'b0;
 							if (~CBE_IO[3])
 								MST_MemOffset[31:24] <= AD_IO[31:24];
 							if (~CBE_IO[2])
@@ -716,7 +686,6 @@ always @(posedge pclk) begin
 						default:
 							LED_Port <= AD_IO[0];
 					endcase
-`endif
 				end
 				Local_DTACK <= 1'b1;
 				seq_next_state <= SEQ_COMPLETE;
