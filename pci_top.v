@@ -116,9 +116,9 @@ reg Retry                = 1'b0;
 wire [31:2] MST_Address;
 reg [31:0] MST_WriteData = 32'h0;
 reg [31:0] MST_ReadData  = 32'h0;
-reg [31:2] MST_MemStart  = 30'h3c000000;
-reg [31:2] MST_MemEnd    = 30'h3c000200;
-reg [31:2] MST_MemOffset = 30'h00000000;
+reg [31:2] MST_MemStart  = 30'h0;
+reg [31:2] MST_MemEnd    = 30'h0;
+reg [31:2] MST_MemOffset = 30'h0;
 
 reg LED_Port             = 1'b0;
 
@@ -241,8 +241,8 @@ asfifo #(
 );
 assign cpci_wr_rdy = ~full_out;
 
-reg [31:2] MST_ReadAddr  = 30'h3c000000;
-reg [31:2] MST_WriteAddr = 30'h3c000000;
+reg [31:2] MST_ReadAddr  = 30'h0;
+reg [31:2] MST_WriteAddr = 30'h0;
 
 wire full_out2;
 reg fifo2_wen = 1'b0;
@@ -257,7 +257,7 @@ asfifo #(
 
 	.Data_in({MST_ReadAddr[31:2], 2'b0, MST_ReadData[31:0]}),
 	.Full_out(full_out2),
-	.WriteEn_in(1'b0),
+	.WriteEn_in(fifo2_wen),
 	.WClk(pclk),
 	.Clear_in(reset)
 );
@@ -266,7 +266,7 @@ asfifo #(
 //-----------------------------------
 // Systetm Sequencer
 //-----------------------------------
-assign MST_Address = MST_ReadWrite ? MST_WriteAddr : MST_ReadAddr;
+assign MST_Address = MST_ReadWrite ? MST_WriteAddr : (MST_ReadAddr + MST_MemOffset);
 
 reg [2:0] sys_next_state = 3'h0;
 parameter SYS_IDLE		= 3'b000;
@@ -279,8 +279,8 @@ always @(posedge pclk) begin
 	if (reset) begin
 		sys_next_state <= SYS_IDLE;
 		MST_Start     <= 1'b0;
-		MST_ReadAddr  <= 30'h3c000000;
-		MST_WriteAddr <= 30'h3c000000;
+		MST_ReadAddr  <= 30'h0;
+		MST_WriteAddr <= 30'h0;
 		MST_ReadWrite <= 1'b0;
 		MST_WriteData <= 32'h0;
 		readen        <= 1'b0;
@@ -292,15 +292,13 @@ always @(posedge pclk) begin
 			SYS_IDLE: begin
 				if (MST_ReadAddr < MST_MemStart || MST_ReadAddr >= MST_MemEnd)
 					MST_ReadAddr <= MST_MemStart;
-				if (initiator_next_state == INI_IDLE & ~Retry) begin
+				if (initiator_next_state == INI_IDLE && ~Retry) begin
 					if (empty == 1'b1) begin
-`ifdef 0
 						if (~full_out2) begin
 							MST_Start      <= 1'b1;
 							MST_ReadWrite  <= 1'b0;
 							sys_next_state <= SYS_READ1;
 						end
-`endif
 					end else begin
 						MST_Start      <= 1'b1;
 						readen         <= 1'b1;
@@ -317,7 +315,7 @@ always @(posedge pclk) begin
 				end
 			end
 			SYS_READ2: begin
-				MST_ReadAddr   <= MST_ReadAddr + 4;
+				MST_ReadAddr   <= MST_ReadAddr + 1;
 				sys_next_state <= SYS_IDLE;
 			end
 			SYS_WRITE1: begin
@@ -334,34 +332,6 @@ always @(posedge pclk) begin
 		endcase
 	end
 end
-
-`ifdef 0
-always @(posedge pclk) begin
-	if (reset) begin
-		MST_Start     <= 1'b0;
-		MST_Address   <= 30'h0;
-		MST_ReadWrite <= 1'b0;
-		MST_WriteData <= 32'h0;
-		readen        <= 1'b0;
-	end else begin
-		if (readen) begin
-			readen              <= 1'b0;
-			MST_Address[31:2]   <= dataout[63:34];
-			MST_WriteData[31:0] <= dataout[31:0];
-			MST_Start           <= 1'b1;
-			MST_ReadWrite       <= 1'b1;
-		end else begin
-			if (initiator_next_state == INI_IDLE & ~Retry & ~MST_Start) begin
-				if (~empty) begin
-					MST_Start <= 1'b1;
-					readen    <= 1'b1;
-				end
-			end else if (initiator_next_state == INI_TURN_AROUND & ~Retry)
-				MST_Start <= 1'b0;
-		end
-	end
-end
-`endif
 
 //-----------------------------------
 // Target
@@ -639,8 +609,10 @@ always @(posedge pclk) begin
 
 		Local_DTACK   <= 1'b0;
 
-		MST_MemStart  <= 30'h3c000000;
-		MST_MemEnd    <= 30'h3c000200;
+//		MST_MemStart  <= 30'h3c000000;
+//		MST_MemEnd    <= 30'h3c000200;
+		MST_MemStart  <= 30'h00000000;
+		MST_MemEnd    <= 30'h00000200;
 		MST_MemOffset <= 30'h00000000;
 	end else begin
 		case (seq_next_state)
