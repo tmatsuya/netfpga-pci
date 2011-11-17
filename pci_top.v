@@ -43,8 +43,8 @@ module pci_top (
 
 	output [31:0] cpci_debug_data,	// CPCI-2
 	output [31:0] cpci_dma_data,
-	output        cpci_dma_wr_en,
-	input         cnet_err,
+	input         cpci_dma_wr_en,	// _read enable
+	output        cnet_err,		// empty
 
 	output        rp_cclk,		// Reprogramming signals
 	output        rp_prog_b,
@@ -113,9 +113,12 @@ reg MST_IntMask          = 1'b0;
 reg [3:0] DEVSEL_Count   = 4'd0;
 reg Retry                = 1'b0;
 
-reg [31:2] MST_Address   = 30'h0;
+reg [31:2] MST_Address   = 30'h3c000000;
 reg [31:0] MST_WriteData = 32'h0;
 reg [31:0] MST_ReadData  = 32'h0;
+reg [31:2] MST_MemStart  = 30'h3c000000;
+reg [31:2] MST_MemEnd    = 30'h3c000200;
+reg [31:2] MST_MemOffset = 30'h00000000;
 
 reg LED_Port             = 1'b0;
 
@@ -238,6 +241,24 @@ asfifo #(
 );
 assign cpci_wr_rdy = ~full_out;
 
+wire full_out2;
+asfifo #(
+		.DATA_WIDTH(64),
+		.ADDRESS_WIDTH(4)
+) asfifo2_inst (
+	.Data_out({cpci_debug_data[31:0], cpci_dma_data[31:0]}),
+	.Empty_out(cnet_err),
+	.ReadEn_in(~cpci_dma_wr_en),
+	.RClk(cpci_clk),
+
+	.Data_in({MST_Address[31:2], 2'b0, MST_ReadData[31:0]}),
+	.Full_out(full_out2),
+	.WriteEn_in(1'b0),
+	.WClk(pclk),
+	.Clear_in(reset)
+);
+
+
 always @(posedge pclk) begin
 	if (reset) begin
 		MST_Start     <= 1'b0;
@@ -263,10 +284,6 @@ always @(posedge pclk) begin
 		end
 	end
 end
-
-assign cpci_debug_data = 32'hf0000000;
-assign cpci_dma_data   = 32'h12345678;
-assign cpci_dma_wr_en  = 1'b0;
 
 //-----------------------------------
 // Target
@@ -535,14 +552,18 @@ always @(posedge pclk) begin
 		// Initiator Registers
 `ifndef ENABLE_EXTBUS
 		MST_Start     <= 1'b0;
-		MST_Address   <= 30'h0;
+		MST_Address   <= 30'h3c000000;
 		MST_WriteData <= 32'h0;
 `endif
 		MST_IntStat   <= 1'b0;
 		MST_IntClr    <= 1'b0;
 		MST_IntMask   <= 1'b0;
 
-		Local_DTACK <= 1'b0;
+		Local_DTACK   <= 1'b0;
+
+		MST_MemStart  <= 30'h3c000000;
+		MST_MemEnd    <= 30'h3c000200;
+		MST_MemOffset <= 30'h00000000;
 	end else begin
 		case (seq_next_state)
 			SEQ_IDLE: begin
@@ -568,6 +589,12 @@ always @(posedge pclk) begin
 							AD_Port[31:0] <= MST_ReadData;
 						3'b011:
 							AD_Port[31:0] <= MST_WriteData;
+						3'b100:
+							AD_Port[31:0] <= {MST_MemStart, 2'b00};
+						3'b101:
+							AD_Port[31:0] <= {MST_MemEnd, 2'b00};
+						3'b110:
+							AD_Port[31:0] <= {MST_MemOffset, 2'b00};
 						default:
 							AD_Port[31:0] <= 32'hcdab3412;
 					endcase
@@ -584,6 +611,7 @@ always @(posedge pclk) begin
 								MST_Start     <= AD_IO[0];
 							end
 						end
+`ifdef 0
 						3'b001: begin
 							if (~CBE_IO[3])
 								MST_Address[31:24] <= AD_IO[31:24];
@@ -594,6 +622,7 @@ always @(posedge pclk) begin
 							if (~CBE_IO[0])
 								MST_Address[ 7: 2] <= AD_IO[ 7: 2];
 						end
+`endif
 						3'b011: begin
 							if (~CBE_IO[3])
 								MST_WriteData[31:24] <= AD_IO[31:24];
@@ -603,6 +632,36 @@ always @(posedge pclk) begin
 								MST_WriteData[15: 8] <= AD_IO[15: 8];
 							if (~CBE_IO[0])
 								MST_WriteData[ 7: 0] <= AD_IO[ 7: 0];
+						end
+						3'b100: begin
+							if (~CBE_IO[3])
+								MST_MemStart[31:24] <= AD_IO[31:24];
+							if (~CBE_IO[2])
+								MST_MemStart[23:16] <= AD_IO[23:16];
+							if (~CBE_IO[1])
+								MST_MemStart[15: 8] <= AD_IO[15: 8];
+							if (~CBE_IO[0])
+								MST_MemStart[ 7: 2] <= AD_IO[ 7: 2];
+						end
+						3'b101: begin
+							if (~CBE_IO[3])
+								MST_MemEnd[31:24] <= AD_IO[31:24];
+							if (~CBE_IO[2])
+								MST_MemEnd[23:16] <= AD_IO[23:16];
+							if (~CBE_IO[1])
+								MST_MemEnd[15: 8] <= AD_IO[15: 8];
+							if (~CBE_IO[0])
+								MST_MemEnd[ 7: 2] <= AD_IO[ 7: 2];
+						end
+						3'b110: begin
+							if (~CBE_IO[3])
+								MST_MemOffset[31:24] <= AD_IO[31:24];
+							if (~CBE_IO[2])
+								MST_MemOffset[23:16] <= AD_IO[23:16];
+							if (~CBE_IO[1])
+								MST_MemOffset[15: 8] <= AD_IO[15: 8];
+							if (~CBE_IO[0])
+								MST_MemOffset[ 7: 2] <= AD_IO[ 7: 2];
 						end
 						default:
 							LED_Port <= AD_IO[0];
