@@ -293,9 +293,9 @@ always @(posedge pclk) begin
 			SYS_IDLE: begin
 				if (MST_ReadAddr < MST_MemStart || MST_ReadAddr >= MST_MemEnd)
 					MST_ReadAddr <= MST_MemStart;
-				if (initiator_next_state == INI_IDLE && ~Retry && MST_Enable) begin
+				if (initiator_next_state == INI_IDLE && ~Retry) begin
 					if (empty == 1'b1) begin
-						if (~full_out2) begin
+						if (~full_out2 && MST_Enable) begin
 							MST_Start      <= 1'b1;
 							MST_ReadWrite  <= 1'b0;
 							sys_next_state <= SYS_READ1;
