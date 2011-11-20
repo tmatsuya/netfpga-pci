@@ -117,8 +117,8 @@ reg Retry                = 1'b0;
 wire [31:2] MST_Address;
 reg [31:0] MST_WriteData = 32'h0;
 reg [31:0] MST_ReadData  = 32'h0;
-reg [31:2] MST_MemStart  = 30'h40000+(cpci_id<<7);
-reg [31:2] MST_MemEnd    = 30'h40020+(cpci_id<<7);
+reg [31:2] MST_MemStart  = 30'h40000;
+reg [31:2] MST_MemEnd    = 30'h40020;
 reg [31:2] MST_MemOffset = 30'h0;
 
 reg LED_Port             = 1'b0;
@@ -608,8 +608,8 @@ always @(posedge pclk) begin
 
 //		MST_MemStart  <= 30'h3c000000;
 //		MST_MemEnd    <= 30'h3c000200;
-		MST_MemStart  <= 30'h40000+(cpci_id<<7);
-		MST_MemEnd    <= 30'h40020+(cpci_id<<7);
+		MST_MemStart  <= 30'h40000 + (cpci_id<<5);
+		MST_MemEnd    <= 30'h40020 + (cpci_id<<5);
 		MST_MemOffset <= 30'h00000000;
 	end else begin
 		case (seq_next_state)
