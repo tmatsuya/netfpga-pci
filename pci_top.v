@@ -117,8 +117,8 @@ reg Retry                = 1'b0;
 wire [31:2] MST_Address;
 reg [31:0] MST_WriteData = 32'h0;
 reg [31:0] MST_ReadData  = 32'h0;
-reg [31:2] MST_MemStart  = 30'h40000;
-reg [31:2] MST_MemEnd    = 30'h40020;
+reg [31:2] MST_MemStart  = 30'b111111111111111111111111111111;
+reg [31:2] MST_MemEnd    = 30'h0;
 reg [31:2] MST_MemOffset = 30'h0;
 
 reg LED_Port             = 1'b0;
@@ -606,12 +606,14 @@ always @(posedge pclk) begin
 
 		Local_DTACK   <= 1'b0;
 
-//		MST_MemStart  <= 30'h3c000000;
-//		MST_MemEnd    <= 30'h3c000200;
 		MST_MemStart  <= 30'h40000 + (cpci_id<<5);
 		MST_MemEnd    <= 30'h40020 + (cpci_id<<5);
 		MST_MemOffset <= 30'h00000000;
 	end else begin
+		if (MST_MemStart == 30'b111111111111111111111111111111) begin
+			MST_MemStart  <= 30'h40000 + (cpci_id<<5);
+			MST_MemEnd    <= 30'h40020 + (cpci_id<<5);
+		end
 		case (seq_next_state)
 			SEQ_IDLE: begin
 				if (Local_Bus_Start) begin
