@@ -412,3 +412,5 @@ NET "cpci_id<0>"   LOC = "AA5" | IOSTANDARD = LVCMOS2 ;
 NET "cpci_id<1>"   LOC = "AB4" | IOSTANDARD = LVCMOS2 ;
 NET "cpci_id<2>"   LOC = "AA4" | IOSTANDARD = LVCMOS2 ;
 NET "cpci_id<3>"   LOC = "AB3" | IOSTANDARD = LVCMOS2 ;
+
+NET "cpci_dma_nearly_full" LOC = "AA18" | IOSTANDARD = LVCMOS2 ;

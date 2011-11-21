@@ -59,7 +59,8 @@ module pci_top (
 	input         cpci_jmpr,
 	input [3:0]   cpci_id,
 	output [3:0]  cpci_tx_full,
-
+	output        cpci_dma_nearly_full,
+ 
 	output        LED
 );
 
@@ -121,6 +122,7 @@ reg [31:2] MST_MemStart  = 30'b111111111111111111111111111111;
 reg [31:2] MST_MemEnd    = 30'h0;
 reg [31:2] MST_MemOffset = 30'h0;
 
+reg REP_Mode             = 1'b0;
 reg LED_Port             = 1'b0;
 
 parameter PCI_IO_CYCLE		= 3'b001;
@@ -603,16 +605,17 @@ always @(posedge pclk) begin
 		MST_IntStat   <= 1'b0;
 		MST_IntClr    <= 1'b0;
 		MST_IntMask   <= 1'b0;
+		REP_Mode      <= 1'b0;
 
 		Local_DTACK   <= 1'b0;
 
-		MST_MemStart  <= 30'h40000 + (cpci_id<<5);
-		MST_MemEnd    <= 30'h40020 + (cpci_id<<5);
+		MST_MemStart  <= 30'h40000 + (cpci_id<<6);
+		MST_MemEnd    <= 30'h40040 + (cpci_id<<6);
 		MST_MemOffset <= 30'h00000000;
 	end else begin
 		if (MST_MemStart == 30'b111111111111111111111111111111) begin
-			MST_MemStart  <= 30'h40000 + (cpci_id<<5);
-			MST_MemEnd    <= 30'h40020 + (cpci_id<<5);
+			MST_MemStart  <= 30'h40000 + (cpci_id<<6);
+			MST_MemEnd    <= 30'h40040 + (cpci_id<<6);
 		end
 		case (seq_next_state)
 			SEQ_IDLE: begin
@@ -631,7 +634,7 @@ always @(posedge pclk) begin
 				if (~PCI_BusCommand[0]) begin
 					case (PCI_Address[4:2])
 						3'b000:
-							AD_Port[31:0] <= {MST_IntStat,MST_IntMask,14'b0,MST_Abort,TGT_Abort,12'b0,MST_Busy,MST_Enable};
+							AD_Port[31:0] <= {MST_IntStat,MST_IntMask,14'b0,MST_Abort,TGT_Abort,11'b0,MST_Busy,REP_Mode,MST_Enable};
 						3'b001:
 							AD_Port[31:0] <= {MST_MemStart, 2'b00};
 						3'b010:
@@ -649,6 +652,7 @@ always @(posedge pclk) begin
 								MST_IntMask <= AD_IO[30];
 							end
 							if (~CBE_IO[0]) begin
+								REP_Mode      <= AD_IO[1];
 								MST_Enable    <= AD_IO[0];
 							end
 						end
@@ -864,6 +868,7 @@ assign allow_reprog = 1'bz;
 
 // Switch
 assign cpci_tx_full =  cpci_id;
+assign cpci_dma_nearly_full = REP_Mode;
 
 //-----------------------------------
 // Chipscope Pro Module
