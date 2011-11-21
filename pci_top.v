@@ -105,7 +105,7 @@ reg PAR_Port             = 1'b0;
 // Initiator register
 //-----------------------------------
 reg MST_Start            = 1'b0;
-reg MST_Enable           = 1'b0;
+reg MST_Enable           = 1'b1;
 reg MST_Busy             = 1'b0;
 reg MST_ReadWrite        = 1'b0;
 reg MST_Abort            = 1'b0;
@@ -602,7 +602,7 @@ always @(posedge pclk) begin
 		CFG_Sta_MAbt_Clr <= 1'b0;
 		CFG_Sta_TAbt_Clr <= 1'b0;
 		// Initiator Registers
-		MST_Enable    <= 1'b0;
+		MST_Enable    <= 1'b1;
 		MST_IntStat   <= 1'b0;
 		MST_IntClr    <= 1'b0;
 		MST_IntMask   <= 1'b0;
