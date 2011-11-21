@@ -57,9 +57,10 @@ module pci_top (
 	output        allow_reprog,	// Allow reprogramming
 
 	input         cpci_jmpr,
-	input [3:0]   cpci_id,
-	output [3:0]  cpci_tx_full,
-	output        cpci_dma_nearly_full,
+	input [3:0]   cpci_id,			// Rotary ID
+	output [3:0]  cpci_tx_full,		// ID through to Virtex
+	output        cpci_dma_nearly_full,	// Repl Mode
+	input         phy_int_b,		// Phy Status?
  
 	output        LED
 );
