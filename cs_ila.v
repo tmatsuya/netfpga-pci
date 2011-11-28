@@ -7,7 +7,7 @@
 // \   \   \/     Version: K.39
 //  \   \         Application: netgen
 //  /   /         Filename: cs_ila.v
-// /___/   /\     Timestamp: Sun Nov 20 23:49:29 2011
+// /___/   /\     Timestamp: Sun Nov 27 22:52:37 2011
 // \   \  /  \ 
 //  \___\/\___\
 //             
@@ -38,7 +38,7 @@ module cs_ila (
 );
   input CLK;
   inout [35 : 0] CONTROL;
-  input [7 : 0] TRIG0;
+  input [15 : 0] TRIG0;
   input [63 : 0] DATA;
   
   // synthesis translate_off
@@ -117,8 +117,11 @@ module cs_ila (
   wire \U0/I_YES_D.U_ILA/U_TRIG/CFG_TRIGCOND_EN ;
   wire \U0/I_YES_D.U_ILA/U_TRIG/U_TC/I_TSEQ_NEQ2.U_TC_EQUATION/iTRIGGER ;
   wire \U0/I_YES_D.U_ILA/U_TRIG/U_TM/G_NMU[0].U_M/CFG_MU_EN ;
-  wire \U0/I_YES_D.U_ILA/U_TRIG/U_TM/G_NMU[0].U_M/U_MU/CFG_DOUT ;
   wire \U0/I_YES_D.U_ILA/U_TRIG/U_TM/G_NMU[0].U_M/U_MU/DOUT_tmp ;
+  wire \U0/I_YES_D.U_ILA/U_TRIG/U_TM/G_NMU[0].U_M/U_MU/I_MUT_GAND.U_match/I_SRL16.U_GAND_SRL16/sel[0] ;
+  wire \U0/I_YES_D.U_ILA/U_TRIG/U_TM/G_NMU[0].U_M/U_MU/I_MUT_GAND.U_match/I_SRL16.U_GAND_SRL16/sel[1] ;
+  wire \U0/I_YES_D.U_ILA/U_TRIG/U_TM/G_NMU[0].U_M/U_MU/I_MUT_GAND.U_match/I_SRL16.U_GAND_SRL16/sel[8] ;
+  wire \U0/I_YES_D.U_ILA/U_TRIG/U_TM/G_NMU[0].U_M/U_MU/I_MUT_GAND.U_match/I_SRL16.U_GAND_SRL16/sel[9] ;
   wire \U0/I_YES_D.U_ILA/U_TRIG/U_TM/G_NMU[0].U_M/dout_tmp ;
   wire \U0/I_YES_D.U_ILA/U_TRIG/trigCondIn ;
   wire \U0/I_YES_D.U_ILA/U_TRIG/trigCondOut ;
@@ -301,9 +304,9 @@ module cs_ila (
   wire [4 : 0] \U0/I_YES_D.U_ILA/U_TRIG/CFG_TRIGCOND_EN_VEC ;
   wire [0 : 0] \U0/I_YES_D.U_ILA/U_TRIG/U_TC/I_TSEQ_NEQ2.U_TC_EQUATION/iCFG_EN_VEC ;
   wire [0 : 0] \U0/I_YES_D.U_ILA/U_TRIG/U_TC/iCFG_DATA ;
-  wire [7 : 0] \U0/I_YES_D.U_ILA/U_TRIG/U_TM/G_NMU[0].U_M/U_MU/I_MUT_GAND.U_match/I_SRL16.U_GAND_SRL16/din_dly1 ;
-  wire [1 : 1] \U0/I_YES_D.U_ILA/U_TRIG/U_TM/G_NMU[0].U_M/U_MU/I_MUT_GAND.U_match/I_SRL16.U_GAND_SRL16/sel ;
-  wire [2 : 0] \U0/I_YES_D.U_ILA/U_TRIG/U_TM/G_NMU[0].U_M/U_MU/I_MUT_GAND.U_match/I_SRL16.U_GAND_SRL16/tmpCompData ;
+  wire [15 : 0] \U0/I_YES_D.U_ILA/U_TRIG/U_TM/G_NMU[0].U_M/U_MU/I_MUT_GAND.U_match/I_SRL16.U_GAND_SRL16/din_dly1 ;
+  wire [2 : 0] \U0/I_YES_D.U_ILA/U_TRIG/U_TM/G_NMU[0].U_M/U_MU/I_MUT_GAND.U_match/I_SRL16.U_GAND_SRL16/tmpCompData0 ;
+  wire [1 : 0] \U0/I_YES_D.U_ILA/U_TRIG/U_TM/G_NMU[0].U_M/U_MU/I_MUT_GAND.U_match/I_SRL16.U_GAND_SRL16/tmpCompData ;
   wire [8 : 0] \U0/I_YES_D.U_ILA/iCAP_NUM_SAMPLES ;
   wire [1 : 0] \U0/I_YES_D.U_ILA/iCAP_STATE ;
   wire [8 : 0] \U0/I_YES_D.U_ILA/iCAP_WR_ADDR ;
@@ -312,7 +315,7 @@ module cs_ila (
   wire [63 : 0] \U0/I_YES_D.U_ILA/iDATA ;
   wire [7 : 0] \U0/I_YES_D.U_ILA/iRESET ;
   wire [63 : 0] \U0/iDATA ;
-  wire [7 : 0] \U0/iTRIG_IN ;
+  wire [15 : 0] \U0/iTRIG_IN ;
   GND   XST_GND (
     .G(N0)
   );
@@ -350,86 +353,6 @@ module cs_ila (
     .D(\U0/I_YES_D.U_ILA/U_TRIG/U_TM/G_NMU[0].U_M/dout_tmp ),
     .S(\U0/I_YES_D.U_ILA/iRESET [2]),
     .Q(\U0/I_YES_D.U_ILA/U_TRIG/trigCondIn )
-  );
-  FDS #(
-    .INIT ( 1'b1 ))
-  \U0/I_YES_D.U_ILA/U_TRIG/U_TM/G_NMU[0].U_M/U_MU/I_MUT_GAND.U_match/I_SRL16.U_GAND_SRL16/I_TW_GTE8.F_TW[0].I_NO_RPM.I_OREG.U_OREG  (
-    .C(CLK),
-    .D(\U0/I_YES_D.U_ILA/U_TRIG/U_TM/G_NMU[0].U_M/U_MU/I_MUT_GAND.U_match/I_SRL16.U_GAND_SRL16/tmpCompData [2]),
-    .S(\U0/I_YES_D.U_ILA/iRESET [0]),
-    .Q(\U0/I_YES_D.U_ILA/U_TRIG/U_TM/G_NMU[0].U_M/U_MU/DOUT_tmp )
-  );
-  FDPE #(
-    .INIT ( 1'b1 ))
-  \U0/I_YES_D.U_ILA/U_TRIG/U_TM/G_NMU[0].U_M/U_MU/I_MUT_GAND.U_match/I_SRL16.U_GAND_SRL16/I_YES_IREG.F_TW[7].U_IREG  (
-    .C(CLK),
-    .CE(N1),
-    .D(\U0/iTRIG_IN [7]),
-    .PRE(\U0/I_YES_D.U_ILA/U_TRIG/U_TM/G_NMU[0].U_M/CFG_MU_EN ),
-    .Q(\U0/I_YES_D.U_ILA/U_TRIG/U_TM/G_NMU[0].U_M/U_MU/I_MUT_GAND.U_match/I_SRL16.U_GAND_SRL16/din_dly1 [7])
-  );
-  FDPE #(
-    .INIT ( 1'b1 ))
-  \U0/I_YES_D.U_ILA/U_TRIG/U_TM/G_NMU[0].U_M/U_MU/I_MUT_GAND.U_match/I_SRL16.U_GAND_SRL16/I_YES_IREG.F_TW[6].U_IREG  (
-    .C(CLK),
-    .CE(N1),
-    .D(\U0/iTRIG_IN [6]),
-    .PRE(\U0/I_YES_D.U_ILA/U_TRIG/U_TM/G_NMU[0].U_M/CFG_MU_EN ),
-    .Q(\U0/I_YES_D.U_ILA/U_TRIG/U_TM/G_NMU[0].U_M/U_MU/I_MUT_GAND.U_match/I_SRL16.U_GAND_SRL16/din_dly1 [6])
-  );
-  FDPE #(
-    .INIT ( 1'b1 ))
-  \U0/I_YES_D.U_ILA/U_TRIG/U_TM/G_NMU[0].U_M/U_MU/I_MUT_GAND.U_match/I_SRL16.U_GAND_SRL16/I_YES_IREG.F_TW[5].U_IREG  (
-    .C(CLK),
-    .CE(N1),
-    .D(\U0/iTRIG_IN [5]),
-    .PRE(\U0/I_YES_D.U_ILA/U_TRIG/U_TM/G_NMU[0].U_M/CFG_MU_EN ),
-    .Q(\U0/I_YES_D.U_ILA/U_TRIG/U_TM/G_NMU[0].U_M/U_MU/I_MUT_GAND.U_match/I_SRL16.U_GAND_SRL16/din_dly1 [5])
-  );
-  FDPE #(
-    .INIT ( 1'b1 ))
-  \U0/I_YES_D.U_ILA/U_TRIG/U_TM/G_NMU[0].U_M/U_MU/I_MUT_GAND.U_match/I_SRL16.U_GAND_SRL16/I_YES_IREG.F_TW[4].U_IREG  (
-    .C(CLK),
-    .CE(N1),
-    .D(\U0/iTRIG_IN [4]),
-    .PRE(\U0/I_YES_D.U_ILA/U_TRIG/U_TM/G_NMU[0].U_M/CFG_MU_EN ),
-    .Q(\U0/I_YES_D.U_ILA/U_TRIG/U_TM/G_NMU[0].U_M/U_MU/I_MUT_GAND.U_match/I_SRL16.U_GAND_SRL16/din_dly1 [4])
-  );
-  FDPE #(
-    .INIT ( 1'b1 ))
-  \U0/I_YES_D.U_ILA/U_TRIG/U_TM/G_NMU[0].U_M/U_MU/I_MUT_GAND.U_match/I_SRL16.U_GAND_SRL16/I_YES_IREG.F_TW[3].U_IREG  (
-    .C(CLK),
-    .CE(N1),
-    .D(\U0/iTRIG_IN [3]),
-    .PRE(\U0/I_YES_D.U_ILA/U_TRIG/U_TM/G_NMU[0].U_M/CFG_MU_EN ),
-    .Q(\U0/I_YES_D.U_ILA/U_TRIG/U_TM/G_NMU[0].U_M/U_MU/I_MUT_GAND.U_match/I_SRL16.U_GAND_SRL16/din_dly1 [3])
-  );
-  FDPE #(
-    .INIT ( 1'b1 ))
-  \U0/I_YES_D.U_ILA/U_TRIG/U_TM/G_NMU[0].U_M/U_MU/I_MUT_GAND.U_match/I_SRL16.U_GAND_SRL16/I_YES_IREG.F_TW[2].U_IREG  (
-    .C(CLK),
-    .CE(N1),
-    .D(\U0/iTRIG_IN [2]),
-    .PRE(\U0/I_YES_D.U_ILA/U_TRIG/U_TM/G_NMU[0].U_M/CFG_MU_EN ),
-    .Q(\U0/I_YES_D.U_ILA/U_TRIG/U_TM/G_NMU[0].U_M/U_MU/I_MUT_GAND.U_match/I_SRL16.U_GAND_SRL16/din_dly1 [2])
-  );
-  FDPE #(
-    .INIT ( 1'b1 ))
-  \U0/I_YES_D.U_ILA/U_TRIG/U_TM/G_NMU[0].U_M/U_MU/I_MUT_GAND.U_match/I_SRL16.U_GAND_SRL16/I_YES_IREG.F_TW[1].U_IREG  (
-    .C(CLK),
-    .CE(N1),
-    .D(\U0/iTRIG_IN [1]),
-    .PRE(\U0/I_YES_D.U_ILA/U_TRIG/U_TM/G_NMU[0].U_M/CFG_MU_EN ),
-    .Q(\U0/I_YES_D.U_ILA/U_TRIG/U_TM/G_NMU[0].U_M/U_MU/I_MUT_GAND.U_match/I_SRL16.U_GAND_SRL16/din_dly1 [1])
-  );
-  FDPE #(
-    .INIT ( 1'b1 ))
-  \U0/I_YES_D.U_ILA/U_TRIG/U_TM/G_NMU[0].U_M/U_MU/I_MUT_GAND.U_match/I_SRL16.U_GAND_SRL16/I_YES_IREG.F_TW[0].U_IREG  (
-    .C(CLK),
-    .CE(N1),
-    .D(\U0/iTRIG_IN [0]),
-    .PRE(\U0/I_YES_D.U_ILA/U_TRIG/U_TM/G_NMU[0].U_M/CFG_MU_EN ),
-    .Q(\U0/I_YES_D.U_ILA/U_TRIG/U_TM/G_NMU[0].U_M/U_MU/I_MUT_GAND.U_match/I_SRL16.U_GAND_SRL16/din_dly1 [0])
   );
   FDPE #(
     .INIT ( 1'b1 ))
@@ -663,21 +586,57 @@ module cs_ila (
     .I3(\U0/I_YES_D.U_ILA/iCFG_EN_VEC [2]),
     .O(\NLW_U0/I_YES_D.U_ILA/U_TRIG/U_TM/G_NMU[0].U_M/I_SRLT_EQ_1.GI[2].U_MCEV_O_UNCONNECTED )
   );
-  XORCY   \U0/I_YES_D.U_ILA/U_TRIG/U_TM/G_NMU[0].U_M/U_MU/I_MUT_GAND.U_match/I_SRL16.U_GAND_SRL16/I_TW_GTE8.F_TW[0].I_NO_RPM.I_OREG.U_XORH  (
-    .CI(\U0/I_YES_D.U_ILA/U_TRIG/U_TM/G_NMU[0].U_M/U_MU/I_MUT_GAND.U_match/I_SRL16.U_GAND_SRL16/tmpCompData [1]),
+  XORCY   \U0/I_YES_D.U_ILA/U_TRIG/U_TM/G_NMU[0].U_M/U_MU/I_MUT_GAND.U_match/I_SRL16.U_GAND_SRL16/I_TW_GTE8.F_TW[1].I_NO_RPM.I_OREG.U_XORH  (
+    .CI(\U0/I_YES_D.U_ILA/U_TRIG/U_TM/G_NMU[0].U_M/U_MU/I_MUT_GAND.U_match/I_SRL16.U_GAND_SRL16/tmpCompData0 [1]),
     .LI(N0),
-    .O(\U0/I_YES_D.U_ILA/U_TRIG/U_TM/G_NMU[0].U_M/U_MU/I_MUT_GAND.U_match/I_SRL16.U_GAND_SRL16/tmpCompData [2])
+    .O(\U0/I_YES_D.U_ILA/U_TRIG/U_TM/G_NMU[0].U_M/U_MU/I_MUT_GAND.U_match/I_SRL16.U_GAND_SRL16/tmpCompData0 [2])
+  );
+  MUXCY_L   \U0/I_YES_D.U_ILA/U_TRIG/U_TM/G_NMU[0].U_M/U_MU/I_MUT_GAND.U_match/I_SRL16.U_GAND_SRL16/I_TW_GTE8.F_TW[1].I_NO_RPM.U_MUXL  (
+    .CI(\U0/I_YES_D.U_ILA/U_TRIG/U_TM/G_NMU[0].U_M/U_MU/I_MUT_GAND.U_match/I_SRL16.U_GAND_SRL16/tmpCompData [1]),
+    .DI(N0),
+    .S(\U0/I_YES_D.U_ILA/U_TRIG/U_TM/G_NMU[0].U_M/U_MU/I_MUT_GAND.U_match/I_SRL16.U_GAND_SRL16/sel[8] ),
+    .LO(\U0/I_YES_D.U_ILA/U_TRIG/U_TM/G_NMU[0].U_M/U_MU/I_MUT_GAND.U_match/I_SRL16.U_GAND_SRL16/tmpCompData0 [0])
+  );
+  MUXCY_L   \U0/I_YES_D.U_ILA/U_TRIG/U_TM/G_NMU[0].U_M/U_MU/I_MUT_GAND.U_match/I_SRL16.U_GAND_SRL16/I_TW_GTE8.F_TW[1].I_NO_RPM.U_MUXH  (
+    .CI(\U0/I_YES_D.U_ILA/U_TRIG/U_TM/G_NMU[0].U_M/U_MU/I_MUT_GAND.U_match/I_SRL16.U_GAND_SRL16/tmpCompData0 [0]),
+    .DI(N0),
+    .S(\U0/I_YES_D.U_ILA/U_TRIG/U_TM/G_NMU[0].U_M/U_MU/I_MUT_GAND.U_match/I_SRL16.U_GAND_SRL16/sel[9] ),
+    .LO(\U0/I_YES_D.U_ILA/U_TRIG/U_TM/G_NMU[0].U_M/U_MU/I_MUT_GAND.U_match/I_SRL16.U_GAND_SRL16/tmpCompData0 [1])
+  );
+  SRL16E #(
+    .INIT ( 16'h0000 ))
+  \U0/I_YES_D.U_ILA/U_TRIG/U_TM/G_NMU[0].U_M/U_MU/I_MUT_GAND.U_match/I_SRL16.U_GAND_SRL16/I_TW_GTE8.F_TW[1].I_NO_RPM.I_SRLT_EQ_1.U_SRLL  (
+    .A0(\U0/I_YES_D.U_ILA/U_TRIG/U_TM/G_NMU[0].U_M/U_MU/I_MUT_GAND.U_match/I_SRL16.U_GAND_SRL16/din_dly1 [8]),
+    .A1(\U0/I_YES_D.U_ILA/U_TRIG/U_TM/G_NMU[0].U_M/U_MU/I_MUT_GAND.U_match/I_SRL16.U_GAND_SRL16/din_dly1 [9]),
+    .A2(\U0/I_YES_D.U_ILA/U_TRIG/U_TM/G_NMU[0].U_M/U_MU/I_MUT_GAND.U_match/I_SRL16.U_GAND_SRL16/din_dly1 [10]),
+    .A3(\U0/I_YES_D.U_ILA/U_TRIG/U_TM/G_NMU[0].U_M/U_MU/I_MUT_GAND.U_match/I_SRL16.U_GAND_SRL16/din_dly1 [11]),
+    .CE(\U0/I_YES_D.U_ILA/U_TRIG/U_TM/G_NMU[0].U_M/CFG_MU_EN ),
+    .CLK(CONTROL[0]),
+    .D(\U0/I_YES_D.U_ILA/U_TRIG/U_TM/G_NMU[0].U_M/U_MU/I_MUT_GAND.U_match/I_SRL16.U_GAND_SRL16/sel[9] ),
+    .Q(\U0/I_YES_D.U_ILA/U_TRIG/U_TM/G_NMU[0].U_M/U_MU/I_MUT_GAND.U_match/I_SRL16.U_GAND_SRL16/sel[8] )
+  );
+  SRL16E #(
+    .INIT ( 16'h0000 ))
+  \U0/I_YES_D.U_ILA/U_TRIG/U_TM/G_NMU[0].U_M/U_MU/I_MUT_GAND.U_match/I_SRL16.U_GAND_SRL16/I_TW_GTE8.F_TW[1].I_NO_RPM.I_SRLT_EQ_1.U_SRLH  (
+    .A0(\U0/I_YES_D.U_ILA/U_TRIG/U_TM/G_NMU[0].U_M/U_MU/I_MUT_GAND.U_match/I_SRL16.U_GAND_SRL16/din_dly1 [12]),
+    .A1(\U0/I_YES_D.U_ILA/U_TRIG/U_TM/G_NMU[0].U_M/U_MU/I_MUT_GAND.U_match/I_SRL16.U_GAND_SRL16/din_dly1 [13]),
+    .A2(\U0/I_YES_D.U_ILA/U_TRIG/U_TM/G_NMU[0].U_M/U_MU/I_MUT_GAND.U_match/I_SRL16.U_GAND_SRL16/din_dly1 [14]),
+    .A3(\U0/I_YES_D.U_ILA/U_TRIG/U_TM/G_NMU[0].U_M/U_MU/I_MUT_GAND.U_match/I_SRL16.U_GAND_SRL16/din_dly1 [15]),
+    .CE(\U0/I_YES_D.U_ILA/U_TRIG/U_TM/G_NMU[0].U_M/CFG_MU_EN ),
+    .CLK(CONTROL[0]),
+    .D(CONTROL[1]),
+    .Q(\U0/I_YES_D.U_ILA/U_TRIG/U_TM/G_NMU[0].U_M/U_MU/I_MUT_GAND.U_match/I_SRL16.U_GAND_SRL16/sel[9] )
   );
   MUXCY_L   \U0/I_YES_D.U_ILA/U_TRIG/U_TM/G_NMU[0].U_M/U_MU/I_MUT_GAND.U_match/I_SRL16.U_GAND_SRL16/I_TW_GTE8.F_TW[0].I_NO_RPM.U_MUXL  (
     .CI(N1),
     .DI(N0),
-    .S(\U0/I_YES_D.U_ILA/U_TRIG/U_TM/G_NMU[0].U_M/U_MU/CFG_DOUT ),
+    .S(\U0/I_YES_D.U_ILA/U_TRIG/U_TM/G_NMU[0].U_M/U_MU/I_MUT_GAND.U_match/I_SRL16.U_GAND_SRL16/sel[0] ),
     .LO(\U0/I_YES_D.U_ILA/U_TRIG/U_TM/G_NMU[0].U_M/U_MU/I_MUT_GAND.U_match/I_SRL16.U_GAND_SRL16/tmpCompData [0])
   );
   MUXCY_L   \U0/I_YES_D.U_ILA/U_TRIG/U_TM/G_NMU[0].U_M/U_MU/I_MUT_GAND.U_match/I_SRL16.U_GAND_SRL16/I_TW_GTE8.F_TW[0].I_NO_RPM.U_MUXH  (
     .CI(\U0/I_YES_D.U_ILA/U_TRIG/U_TM/G_NMU[0].U_M/U_MU/I_MUT_GAND.U_match/I_SRL16.U_GAND_SRL16/tmpCompData [0]),
     .DI(N0),
-    .S(\U0/I_YES_D.U_ILA/U_TRIG/U_TM/G_NMU[0].U_M/U_MU/I_MUT_GAND.U_match/I_SRL16.U_GAND_SRL16/sel [1]),
+    .S(\U0/I_YES_D.U_ILA/U_TRIG/U_TM/G_NMU[0].U_M/U_MU/I_MUT_GAND.U_match/I_SRL16.U_GAND_SRL16/sel[1] ),
     .LO(\U0/I_YES_D.U_ILA/U_TRIG/U_TM/G_NMU[0].U_M/U_MU/I_MUT_GAND.U_match/I_SRL16.U_GAND_SRL16/tmpCompData [1])
   );
   SRL16E #(
@@ -689,8 +648,8 @@ module cs_ila (
     .A3(\U0/I_YES_D.U_ILA/U_TRIG/U_TM/G_NMU[0].U_M/U_MU/I_MUT_GAND.U_match/I_SRL16.U_GAND_SRL16/din_dly1 [3]),
     .CE(\U0/I_YES_D.U_ILA/U_TRIG/U_TM/G_NMU[0].U_M/CFG_MU_EN ),
     .CLK(CONTROL[0]),
-    .D(\U0/I_YES_D.U_ILA/U_TRIG/U_TM/G_NMU[0].U_M/U_MU/I_MUT_GAND.U_match/I_SRL16.U_GAND_SRL16/sel [1]),
-    .Q(\U0/I_YES_D.U_ILA/U_TRIG/U_TM/G_NMU[0].U_M/U_MU/CFG_DOUT )
+    .D(\U0/I_YES_D.U_ILA/U_TRIG/U_TM/G_NMU[0].U_M/U_MU/I_MUT_GAND.U_match/I_SRL16.U_GAND_SRL16/sel[1] ),
+    .Q(\U0/I_YES_D.U_ILA/U_TRIG/U_TM/G_NMU[0].U_M/U_MU/I_MUT_GAND.U_match/I_SRL16.U_GAND_SRL16/sel[0] )
   );
   SRL16E #(
     .INIT ( 16'h0000 ))
@@ -701,8 +660,160 @@ module cs_ila (
     .A3(\U0/I_YES_D.U_ILA/U_TRIG/U_TM/G_NMU[0].U_M/U_MU/I_MUT_GAND.U_match/I_SRL16.U_GAND_SRL16/din_dly1 [7]),
     .CE(\U0/I_YES_D.U_ILA/U_TRIG/U_TM/G_NMU[0].U_M/CFG_MU_EN ),
     .CLK(CONTROL[0]),
-    .D(CONTROL[1]),
-    .Q(\U0/I_YES_D.U_ILA/U_TRIG/U_TM/G_NMU[0].U_M/U_MU/I_MUT_GAND.U_match/I_SRL16.U_GAND_SRL16/sel [1])
+    .D(\U0/I_YES_D.U_ILA/U_TRIG/U_TM/G_NMU[0].U_M/U_MU/I_MUT_GAND.U_match/I_SRL16.U_GAND_SRL16/sel[8] ),
+    .Q(\U0/I_YES_D.U_ILA/U_TRIG/U_TM/G_NMU[0].U_M/U_MU/I_MUT_GAND.U_match/I_SRL16.U_GAND_SRL16/sel[1] )
+  );
+  FDS #(
+    .INIT ( 1'b1 ))
+  \U0/I_YES_D.U_ILA/U_TRIG/U_TM/G_NMU[0].U_M/U_MU/I_MUT_GAND.U_match/I_SRL16.U_GAND_SRL16/I_TW_GTE8.F_TW[1].I_NO_RPM.I_OREG.U_OREG  (
+    .C(CLK),
+    .D(\U0/I_YES_D.U_ILA/U_TRIG/U_TM/G_NMU[0].U_M/U_MU/I_MUT_GAND.U_match/I_SRL16.U_GAND_SRL16/tmpCompData0 [2]),
+    .S(\U0/I_YES_D.U_ILA/iRESET [0]),
+    .Q(\U0/I_YES_D.U_ILA/U_TRIG/U_TM/G_NMU[0].U_M/U_MU/DOUT_tmp )
+  );
+  FDPE #(
+    .INIT ( 1'b1 ))
+  \U0/I_YES_D.U_ILA/U_TRIG/U_TM/G_NMU[0].U_M/U_MU/I_MUT_GAND.U_match/I_SRL16.U_GAND_SRL16/I_YES_IREG.F_TW[15].U_IREG  (
+    .C(CLK),
+    .CE(N1),
+    .D(\U0/iTRIG_IN [15]),
+    .PRE(\U0/I_YES_D.U_ILA/U_TRIG/U_TM/G_NMU[0].U_M/CFG_MU_EN ),
+    .Q(\U0/I_YES_D.U_ILA/U_TRIG/U_TM/G_NMU[0].U_M/U_MU/I_MUT_GAND.U_match/I_SRL16.U_GAND_SRL16/din_dly1 [15])
+  );
+  FDPE #(
+    .INIT ( 1'b1 ))
+  \U0/I_YES_D.U_ILA/U_TRIG/U_TM/G_NMU[0].U_M/U_MU/I_MUT_GAND.U_match/I_SRL16.U_GAND_SRL16/I_YES_IREG.F_TW[14].U_IREG  (
+    .C(CLK),
+    .CE(N1),
+    .D(\U0/iTRIG_IN [14]),
+    .PRE(\U0/I_YES_D.U_ILA/U_TRIG/U_TM/G_NMU[0].U_M/CFG_MU_EN ),
+    .Q(\U0/I_YES_D.U_ILA/U_TRIG/U_TM/G_NMU[0].U_M/U_MU/I_MUT_GAND.U_match/I_SRL16.U_GAND_SRL16/din_dly1 [14])
+  );
+  FDPE #(
+    .INIT ( 1'b1 ))
+  \U0/I_YES_D.U_ILA/U_TRIG/U_TM/G_NMU[0].U_M/U_MU/I_MUT_GAND.U_match/I_SRL16.U_GAND_SRL16/I_YES_IREG.F_TW[13].U_IREG  (
+    .C(CLK),
+    .CE(N1),
+    .D(\U0/iTRIG_IN [13]),
+    .PRE(\U0/I_YES_D.U_ILA/U_TRIG/U_TM/G_NMU[0].U_M/CFG_MU_EN ),
+    .Q(\U0/I_YES_D.U_ILA/U_TRIG/U_TM/G_NMU[0].U_M/U_MU/I_MUT_GAND.U_match/I_SRL16.U_GAND_SRL16/din_dly1 [13])
+  );
+  FDPE #(
+    .INIT ( 1'b1 ))
+  \U0/I_YES_D.U_ILA/U_TRIG/U_TM/G_NMU[0].U_M/U_MU/I_MUT_GAND.U_match/I_SRL16.U_GAND_SRL16/I_YES_IREG.F_TW[12].U_IREG  (
+    .C(CLK),
+    .CE(N1),
+    .D(\U0/iTRIG_IN [12]),
+    .PRE(\U0/I_YES_D.U_ILA/U_TRIG/U_TM/G_NMU[0].U_M/CFG_MU_EN ),
+    .Q(\U0/I_YES_D.U_ILA/U_TRIG/U_TM/G_NMU[0].U_M/U_MU/I_MUT_GAND.U_match/I_SRL16.U_GAND_SRL16/din_dly1 [12])
+  );
+  FDPE #(
+    .INIT ( 1'b1 ))
+  \U0/I_YES_D.U_ILA/U_TRIG/U_TM/G_NMU[0].U_M/U_MU/I_MUT_GAND.U_match/I_SRL16.U_GAND_SRL16/I_YES_IREG.F_TW[11].U_IREG  (
+    .C(CLK),
+    .CE(N1),
+    .D(\U0/iTRIG_IN [11]),
+    .PRE(\U0/I_YES_D.U_ILA/U_TRIG/U_TM/G_NMU[0].U_M/CFG_MU_EN ),
+    .Q(\U0/I_YES_D.U_ILA/U_TRIG/U_TM/G_NMU[0].U_M/U_MU/I_MUT_GAND.U_match/I_SRL16.U_GAND_SRL16/din_dly1 [11])
+  );
+  FDPE #(
+    .INIT ( 1'b1 ))
+  \U0/I_YES_D.U_ILA/U_TRIG/U_TM/G_NMU[0].U_M/U_MU/I_MUT_GAND.U_match/I_SRL16.U_GAND_SRL16/I_YES_IREG.F_TW[10].U_IREG  (
+    .C(CLK),
+    .CE(N1),
+    .D(\U0/iTRIG_IN [10]),
+    .PRE(\U0/I_YES_D.U_ILA/U_TRIG/U_TM/G_NMU[0].U_M/CFG_MU_EN ),
+    .Q(\U0/I_YES_D.U_ILA/U_TRIG/U_TM/G_NMU[0].U_M/U_MU/I_MUT_GAND.U_match/I_SRL16.U_GAND_SRL16/din_dly1 [10])
+  );
+  FDPE #(
+    .INIT ( 1'b1 ))
+  \U0/I_YES_D.U_ILA/U_TRIG/U_TM/G_NMU[0].U_M/U_MU/I_MUT_GAND.U_match/I_SRL16.U_GAND_SRL16/I_YES_IREG.F_TW[9].U_IREG  (
+    .C(CLK),
+    .CE(N1),
+    .D(\U0/iTRIG_IN [9]),
+    .PRE(\U0/I_YES_D.U_ILA/U_TRIG/U_TM/G_NMU[0].U_M/CFG_MU_EN ),
+    .Q(\U0/I_YES_D.U_ILA/U_TRIG/U_TM/G_NMU[0].U_M/U_MU/I_MUT_GAND.U_match/I_SRL16.U_GAND_SRL16/din_dly1 [9])
+  );
+  FDPE #(
+    .INIT ( 1'b1 ))
+  \U0/I_YES_D.U_ILA/U_TRIG/U_TM/G_NMU[0].U_M/U_MU/I_MUT_GAND.U_match/I_SRL16.U_GAND_SRL16/I_YES_IREG.F_TW[8].U_IREG  (
+    .C(CLK),
+    .CE(N1),
+    .D(\U0/iTRIG_IN [8]),
+    .PRE(\U0/I_YES_D.U_ILA/U_TRIG/U_TM/G_NMU[0].U_M/CFG_MU_EN ),
+    .Q(\U0/I_YES_D.U_ILA/U_TRIG/U_TM/G_NMU[0].U_M/U_MU/I_MUT_GAND.U_match/I_SRL16.U_GAND_SRL16/din_dly1 [8])
+  );
+  FDPE #(
+    .INIT ( 1'b1 ))
+  \U0/I_YES_D.U_ILA/U_TRIG/U_TM/G_NMU[0].U_M/U_MU/I_MUT_GAND.U_match/I_SRL16.U_GAND_SRL16/I_YES_IREG.F_TW[7].U_IREG  (
+    .C(CLK),
+    .CE(N1),
+    .D(\U0/iTRIG_IN [7]),
+    .PRE(\U0/I_YES_D.U_ILA/U_TRIG/U_TM/G_NMU[0].U_M/CFG_MU_EN ),
+    .Q(\U0/I_YES_D.U_ILA/U_TRIG/U_TM/G_NMU[0].U_M/U_MU/I_MUT_GAND.U_match/I_SRL16.U_GAND_SRL16/din_dly1 [7])
+  );
+  FDPE #(
+    .INIT ( 1'b1 ))
+  \U0/I_YES_D.U_ILA/U_TRIG/U_TM/G_NMU[0].U_M/U_MU/I_MUT_GAND.U_match/I_SRL16.U_GAND_SRL16/I_YES_IREG.F_TW[6].U_IREG  (
+    .C(CLK),
+    .CE(N1),
+    .D(\U0/iTRIG_IN [6]),
+    .PRE(\U0/I_YES_D.U_ILA/U_TRIG/U_TM/G_NMU[0].U_M/CFG_MU_EN ),
+    .Q(\U0/I_YES_D.U_ILA/U_TRIG/U_TM/G_NMU[0].U_M/U_MU/I_MUT_GAND.U_match/I_SRL16.U_GAND_SRL16/din_dly1 [6])
+  );
+  FDPE #(
+    .INIT ( 1'b1 ))
+  \U0/I_YES_D.U_ILA/U_TRIG/U_TM/G_NMU[0].U_M/U_MU/I_MUT_GAND.U_match/I_SRL16.U_GAND_SRL16/I_YES_IREG.F_TW[5].U_IREG  (
+    .C(CLK),
+    .CE(N1),
+    .D(\U0/iTRIG_IN [5]),
+    .PRE(\U0/I_YES_D.U_ILA/U_TRIG/U_TM/G_NMU[0].U_M/CFG_MU_EN ),
+    .Q(\U0/I_YES_D.U_ILA/U_TRIG/U_TM/G_NMU[0].U_M/U_MU/I_MUT_GAND.U_match/I_SRL16.U_GAND_SRL16/din_dly1 [5])
+  );
+  FDPE #(
+    .INIT ( 1'b1 ))
+  \U0/I_YES_D.U_ILA/U_TRIG/U_TM/G_NMU[0].U_M/U_MU/I_MUT_GAND.U_match/I_SRL16.U_GAND_SRL16/I_YES_IREG.F_TW[4].U_IREG  (
+    .C(CLK),
+    .CE(N1),
+    .D(\U0/iTRIG_IN [4]),
+    .PRE(\U0/I_YES_D.U_ILA/U_TRIG/U_TM/G_NMU[0].U_M/CFG_MU_EN ),
+    .Q(\U0/I_YES_D.U_ILA/U_TRIG/U_TM/G_NMU[0].U_M/U_MU/I_MUT_GAND.U_match/I_SRL16.U_GAND_SRL16/din_dly1 [4])
+  );
+  FDPE #(
+    .INIT ( 1'b1 ))
+  \U0/I_YES_D.U_ILA/U_TRIG/U_TM/G_NMU[0].U_M/U_MU/I_MUT_GAND.U_match/I_SRL16.U_GAND_SRL16/I_YES_IREG.F_TW[3].U_IREG  (
+    .C(CLK),
+    .CE(N1),
+    .D(\U0/iTRIG_IN [3]),
+    .PRE(\U0/I_YES_D.U_ILA/U_TRIG/U_TM/G_NMU[0].U_M/CFG_MU_EN ),
+    .Q(\U0/I_YES_D.U_ILA/U_TRIG/U_TM/G_NMU[0].U_M/U_MU/I_MUT_GAND.U_match/I_SRL16.U_GAND_SRL16/din_dly1 [3])
+  );
+  FDPE #(
+    .INIT ( 1'b1 ))
+  \U0/I_YES_D.U_ILA/U_TRIG/U_TM/G_NMU[0].U_M/U_MU/I_MUT_GAND.U_match/I_SRL16.U_GAND_SRL16/I_YES_IREG.F_TW[2].U_IREG  (
+    .C(CLK),
+    .CE(N1),
+    .D(\U0/iTRIG_IN [2]),
+    .PRE(\U0/I_YES_D.U_ILA/U_TRIG/U_TM/G_NMU[0].U_M/CFG_MU_EN ),
+    .Q(\U0/I_YES_D.U_ILA/U_TRIG/U_TM/G_NMU[0].U_M/U_MU/I_MUT_GAND.U_match/I_SRL16.U_GAND_SRL16/din_dly1 [2])
+  );
+  FDPE #(
+    .INIT ( 1'b1 ))
+  \U0/I_YES_D.U_ILA/U_TRIG/U_TM/G_NMU[0].U_M/U_MU/I_MUT_GAND.U_match/I_SRL16.U_GAND_SRL16/I_YES_IREG.F_TW[1].U_IREG  (
+    .C(CLK),
+    .CE(N1),
+    .D(\U0/iTRIG_IN [1]),
+    .PRE(\U0/I_YES_D.U_ILA/U_TRIG/U_TM/G_NMU[0].U_M/CFG_MU_EN ),
+    .Q(\U0/I_YES_D.U_ILA/U_TRIG/U_TM/G_NMU[0].U_M/U_MU/I_MUT_GAND.U_match/I_SRL16.U_GAND_SRL16/din_dly1 [1])
+  );
+  FDPE #(
+    .INIT ( 1'b1 ))
+  \U0/I_YES_D.U_ILA/U_TRIG/U_TM/G_NMU[0].U_M/U_MU/I_MUT_GAND.U_match/I_SRL16.U_GAND_SRL16/I_YES_IREG.F_TW[0].U_IREG  (
+    .C(CLK),
+    .CE(N1),
+    .D(\U0/iTRIG_IN [0]),
+    .PRE(\U0/I_YES_D.U_ILA/U_TRIG/U_TM/G_NMU[0].U_M/CFG_MU_EN ),
+    .Q(\U0/I_YES_D.U_ILA/U_TRIG/U_TM/G_NMU[0].U_M/U_MU/I_MUT_GAND.U_match/I_SRL16.U_GAND_SRL16/din_dly1 [0])
   );
   FDR #(
     .INIT ( 1'b0 ))
@@ -2570,7 +2681,7 @@ module cs_ila (
     .O(\U0/I_YES_D.U_ILA/U_STAT/NS_load )
   );
   LUT4 #(
-    .INIT ( 16'h0070 ))
+    .INIT ( 16'h00F0 ))
   \U0/I_YES_D.U_ILA/U_STAT/F_SSTAT[10].I_STAT.U_STAT  (
     .I0(\U0/I_YES_D.U_ILA/U_STAT/iSTAT_CNT [0]),
     .I1(\U0/I_YES_D.U_ILA/U_STAT/iSTAT_CNT [1]),
@@ -6533,6 +6644,70 @@ module cs_ila (
     .D(DATA[0]),
     .PRE(N0),
     .Q(\U0/iDATA [0])
+  );
+  FDP #(
+    .INIT ( 1'b1 ))
+  \U0/I_TQ0.G_TW[15].U_TQ  (
+    .C(CLK),
+    .D(TRIG0[15]),
+    .PRE(N0),
+    .Q(\U0/iTRIG_IN [15])
+  );
+  FDP #(
+    .INIT ( 1'b1 ))
+  \U0/I_TQ0.G_TW[14].U_TQ  (
+    .C(CLK),
+    .D(TRIG0[14]),
+    .PRE(N0),
+    .Q(\U0/iTRIG_IN [14])
+  );
+  FDP #(
+    .INIT ( 1'b1 ))
+  \U0/I_TQ0.G_TW[13].U_TQ  (
+    .C(CLK),
+    .D(TRIG0[13]),
+    .PRE(N0),
+    .Q(\U0/iTRIG_IN [13])
+  );
+  FDP #(
+    .INIT ( 1'b1 ))
+  \U0/I_TQ0.G_TW[12].U_TQ  (
+    .C(CLK),
+    .D(TRIG0[12]),
+    .PRE(N0),
+    .Q(\U0/iTRIG_IN [12])
+  );
+  FDP #(
+    .INIT ( 1'b1 ))
+  \U0/I_TQ0.G_TW[11].U_TQ  (
+    .C(CLK),
+    .D(TRIG0[11]),
+    .PRE(N0),
+    .Q(\U0/iTRIG_IN [11])
+  );
+  FDP #(
+    .INIT ( 1'b1 ))
+  \U0/I_TQ0.G_TW[10].U_TQ  (
+    .C(CLK),
+    .D(TRIG0[10]),
+    .PRE(N0),
+    .Q(\U0/iTRIG_IN [10])
+  );
+  FDP #(
+    .INIT ( 1'b1 ))
+  \U0/I_TQ0.G_TW[9].U_TQ  (
+    .C(CLK),
+    .D(TRIG0[9]),
+    .PRE(N0),
+    .Q(\U0/iTRIG_IN [9])
+  );
+  FDP #(
+    .INIT ( 1'b1 ))
+  \U0/I_TQ0.G_TW[8].U_TQ  (
+    .C(CLK),
+    .D(TRIG0[8]),
+    .PRE(N0),
+    .Q(\U0/iTRIG_IN [8])
   );
   FDP #(
     .INIT ( 1'b1 ))

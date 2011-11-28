@@ -12,6 +12,7 @@
 ***********************************************************************/
 `define ENABLE_EXPROM
 `define ENABLE_EXTBUS
+`define DEBUG
 
 module pci_top (
 	input         RST_I,
@@ -105,7 +106,7 @@ reg PAR_Port             = 1'b0;
 // Initiator register
 //-----------------------------------
 reg MST_Start            = 1'b0;
-reg MST_Enable           = 1'b1;
+reg MST_Enable           = 1'b0;
 reg MST_Busy             = 1'b0;
 reg MST_ReadWrite        = 1'b0;
 reg MST_Abort            = 1'b0;
@@ -602,7 +603,7 @@ always @(posedge pclk) begin
 		CFG_Sta_MAbt_Clr <= 1'b0;
 		CFG_Sta_TAbt_Clr <= 1'b0;
 		// Initiator Registers
-		MST_Enable    <= 1'b1;
+		MST_Enable    <= 1'b0;
 		MST_IntStat   <= 1'b0;
 		MST_IntClr    <= 1'b0;
 		MST_IntMask   <= 1'b0;
@@ -871,11 +872,12 @@ assign allow_reprog = 1'bz;
 assign cpci_tx_full =  cpci_id;
 assign cpci_dma_nearly_full = REP_Mode;
 
+`ifdef DEBUG
 //-----------------------------------
 // Chipscope Pro Module
 //-----------------------------------
 wire [35 : 0] CONTROL;
-wire [7 : 0] TRIG;
+wire [15: 0] TRIG;
 wire [63 : 0] DATA;
 cs_icon INST_ICON (
 	.CONTROL0(CONTROL)
@@ -911,11 +913,13 @@ assign DATA[59]     = TGT_PAR;
 assign DATA[63:60]  = DEVSEL_Count[3:0];
 assign TRIG[ 0]     = FRAME_IO;
 assign TRIG[ 1]     = MST_Start;
-assign TRIG[ 2]     = 1'b0;
+assign TRIG[ 2]     = Hit_IO;
 assign TRIG[ 3]     = 1'b0;
-assign TRIG[ 4]     = 1'b0;
-assign TRIG[ 5]     = 1'b0;
-assign TRIG[ 6]     = 1'b0;
-assign TRIG[ 7]     = 1'b0;
+assign TRIG[ 4]     = CBE_IO[0];
+assign TRIG[ 5]     = CBE_IO[1];
+assign TRIG[ 6]     = CBE_IO[2];
+assign TRIG[ 7]     = CBE_IO[3];
+assign TRIG[15:8]   = AD_IO[15:8];
+`endif
 
 endmodule
