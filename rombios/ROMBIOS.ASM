@@ -17,7 +17,7 @@ strROMName CATSTR <'Option ROM Sample Program Image ( for PC/AT ROM )',0> ;PCIƒ{
 pcirVendorID = 3776h
 pcirDeviceID = 8000h
 pcirVPD      = 0000h
-pcirClassBase = 05h
+pcirClassBase = 02h
 pcirClassSub  = 00h
 pcirClassProg = 00h
 pcirRevLvl    = 0000h
