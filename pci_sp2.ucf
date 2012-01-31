@@ -46,6 +46,7 @@ CONFIG PROHIBIT = "V19" ;	#IO_INIT
 # I/O Assignment
 ################################################################################
 #
+NET  "CLK"                         LOC = "W12"  ;
 NET  "PCLK"                        LOC = "C11"  ;
 NET  "RST_I"                       LOC = "E2"   ;
 NET  "AD_IO<31>"                   LOC = "E1"   ;
@@ -213,7 +214,7 @@ TIMESPEC TS_PAS_TSOUT = FROM : "SLOW_FFS" : TO : "PCI_PADS_P" : 25.000 ;
 # generally sufficient when using a single clock. The period should
 # be set at the minimum PCI Bus clock period.
 #
-#NET "PCLK" PERIOD = 30.000;
+NET "PCLK" PERIOD = 30.000;
 #
 ################################################################################
 # User Time Names / User Time Groups
@@ -237,158 +238,82 @@ NET "LED"  LOC = "B12" | IOSTANDARD = LVCMOS2 ;
 
 
 
-
 ################################################################################
 # CPCI
 ################################################################################
-NET "cpci_reset"  LOC = "W13" | IOSTANDARD = LVCMOS2 ;
-NET "cpci_addr<0>"  LOC = "F18" | IOSTANDARD = LVCMOS2 ;
-NET "cpci_addr<10>"  LOC = "H18" | IOSTANDARD = LVCMOS2 ;
-NET "cpci_addr<11>"  LOC = "K22" | IOSTANDARD = LVCMOS2 ;
-NET "cpci_addr<12>"  LOC = "J21" | IOSTANDARD = LVCMOS2 ;
-NET "cpci_addr<13>"  LOC = "J22" | IOSTANDARD = LVCMOS2 ;
-NET "cpci_addr<14>"  LOC = "K21" | IOSTANDARD = LVCMOS2 ;
-NET "cpci_addr<15>"  LOC = "K19" | IOSTANDARD = LVCMOS2 ;
-NET "cpci_addr<16>"  LOC = "K18" | IOSTANDARD = LVCMOS2 ;
-NET "cpci_addr<17>"  LOC = "L17" | IOSTANDARD = LVCMOS2 ;
-NET "cpci_addr<18>"  LOC = "L18" | IOSTANDARD = LVCMOS2 ;
-NET "cpci_addr<19>"  LOC = "L20" | IOSTANDARD = LVCMOS2 ;
-NET "cpci_addr<1>"  LOC = "H21" | IOSTANDARD = LVCMOS2 ;
-NET "cpci_addr<20>"  LOC = "M20" | IOSTANDARD = LVCMOS2 ;
-NET "cpci_addr<21>"  LOC = "M22" | IOSTANDARD = LVCMOS2 ;
-NET "cpci_addr<22>"  LOC = "L22" | IOSTANDARD = LVCMOS2 ;
-NET "cpci_addr<23>"  LOC = "L21" | IOSTANDARD = LVCMOS2 ;
-NET "cpci_addr<24>"  LOC = "AB17" | IOSTANDARD = LVCMOS2 ;
-NET "cpci_addr<25>"  LOC = "AA17" | IOSTANDARD = LVCMOS2 ;
-NET "cpci_addr<26>"  LOC = "Y17" | IOSTANDARD = LVCMOS2 ;
-NET "cpci_addr<27>"  LOC = "W17" | IOSTANDARD = LVCMOS2 ;
-NET "cpci_addr<28>"  LOC = "AB19" | IOSTANDARD = LVCMOS2 ;
-NET "cpci_addr<29>"  LOC = "W18" | IOSTANDARD = LVCMOS2 ;
-NET "cpci_addr<2>"  LOC = "G21" | IOSTANDARD = LVCMOS2 ;
-NET "cpci_addr<3>"  LOC = "H19" | IOSTANDARD = LVCMOS2 ;
-NET "cpci_addr<30>"  LOC = "AB18" | IOSTANDARD = LVCMOS2 ;
-NET "cpci_addr<31>"  LOC = "V17" | IOSTANDARD = LVCMOS2 ;
-NET "cpci_addr<4>"  LOC = "F19" | IOSTANDARD = LVCMOS2 ;
-NET "cpci_addr<5>"  LOC = "G20" | IOSTANDARD = LVCMOS2 ;
-NET "cpci_addr<6>"  LOC = "G19" | IOSTANDARD = LVCMOS2 ;
-NET "cpci_addr<7>"  LOC = "J20" | IOSTANDARD = LVCMOS2 ;
-NET "cpci_addr<8>"  LOC = "J19" | IOSTANDARD = LVCMOS2 ;
-NET "cpci_addr<9>"  LOC = "J18" | IOSTANDARD = LVCMOS2 ;
-NET "cpci_data<0>"  LOC = "B14" | IOSTANDARD = LVCMOS2 ;
-NET "cpci_data<10>"  LOC = "C16" | IOSTANDARD = LVCMOS2 ;
-NET "cpci_data<11>"  LOC = "D16" | IOSTANDARD = LVCMOS2 ;
-NET "cpci_data<12>"  LOC = "E16" | IOSTANDARD = LVCMOS2 ;
-NET "cpci_data<13>"  LOC = "D17" | IOSTANDARD = LVCMOS2 ;
-NET "cpci_data<14>"  LOC = "C17" | IOSTANDARD = LVCMOS2 ;
-NET "cpci_data<15>"  LOC = "B17" | IOSTANDARD = LVCMOS2 ;
-NET "cpci_data<16>"  LOC = "A17" | IOSTANDARD = LVCMOS2 ;
-NET "cpci_data<17>"  LOC = "A18" | IOSTANDARD = LVCMOS2 ;
-NET "cpci_data<18>"  LOC = "B18" | IOSTANDARD = LVCMOS2 ;
-NET "cpci_data<19>"  LOC = "C22" | IOSTANDARD = LVCMOS2 ;
-NET "cpci_data<1>"  LOC = "C14" | IOSTANDARD = LVCMOS2 ;
-NET "cpci_data<20>"  LOC = "A19" | IOSTANDARD = LVCMOS2 ;
-NET "cpci_data<21>"  LOC = "B19" | IOSTANDARD = LVCMOS2 ;
-NET "cpci_data<22>"  LOC = "C18" | IOSTANDARD = LVCMOS2 ;
-NET "cpci_data<23>"  LOC = "E20" | IOSTANDARD = LVCMOS2 ;
-NET "cpci_data<24>"  LOC = "D21" | IOSTANDARD = LVCMOS2 ;
-NET "cpci_data<25>"  LOC = "D22" | IOSTANDARD = LVCMOS2 ;
-NET "cpci_data<26>"  LOC = "E22" | IOSTANDARD = LVCMOS2 ;
-NET "cpci_data<27>"  LOC = "E21" | IOSTANDARD = LVCMOS2 ;
-NET "cpci_data<28>"  LOC = "F21" | IOSTANDARD = LVCMOS2 ;
-NET "cpci_data<29>"  LOC = "F22" | IOSTANDARD = LVCMOS2 ;
-NET "cpci_data<2>"  LOC = "D14" | IOSTANDARD = LVCMOS2 ;
-NET "cpci_data<30>"  LOC = "F20" | IOSTANDARD = LVCMOS2 ;
-NET "cpci_data<31>"  LOC = "G18" | IOSTANDARD = LVCMOS2 ;
-NET "cpci_data<3>"  LOC = "E14" | IOSTANDARD = LVCMOS2 ;
-NET "cpci_data<4>"  LOC = "E15" | IOSTANDARD = LVCMOS2 ;
-NET "cpci_data<5>"  LOC = "D15" | IOSTANDARD = LVCMOS2 ;
-NET "cpci_data<6>"  LOC = "C15" | IOSTANDARD = LVCMOS2 ;
-NET "cpci_data<7>"  LOC = "B15" | IOSTANDARD = LVCMOS2 ;
-NET "cpci_data<8>"  LOC = "A15" | IOSTANDARD = LVCMOS2 ;
-NET "cpci_data<9>"  LOC = "A16" | IOSTANDARD = LVCMOS2 ;
-NET "cpci_rd_rdy"  LOC = "A14" | IOSTANDARD = LVCMOS2 ;
-NET "cpci_req"  LOC = "F12" | IOSTANDARD = LVCMOS2 ;
-NET "cpci_wr_rdy"  LOC = "E12" | IOSTANDARD = LVCMOS2 ;
-NET "cpci_clk"  LOC = "W12" | IOSTANDARD = LVCMOS2 ;
+NET "H_RST_I"      LOC = "W13" | IOSTANDARD = LVCMOS2 ;  ## cpci_reset
+NET "H_AD_IO<0>"   LOC = "B14" | IOSTANDARD = LVCMOS2 ;  ## cpci_data<?>
+NET "H_AD_IO<10>"  LOC = "C16" | IOSTANDARD = LVCMOS2 ;  ## cpci_data<?>
+NET "H_AD_IO<11>"  LOC = "D16" | IOSTANDARD = LVCMOS2 ;  ## cpci_data<?>
+NET "H_AD_IO<12>"  LOC = "E16" | IOSTANDARD = LVCMOS2 ;  ## cpci_data<?>
+NET "H_AD_IO<13>"  LOC = "D17" | IOSTANDARD = LVCMOS2 ;  ## cpci_data<?>
+NET "H_AD_IO<14>"  LOC = "C17" | IOSTANDARD = LVCMOS2 ;  ## cpci_data<?>
+NET "H_AD_IO<15>"  LOC = "B17" | IOSTANDARD = LVCMOS2 ;  ## cpci_data<?>
+NET "H_AD_IO<16>"  LOC = "A17" | IOSTANDARD = LVCMOS2 ;  ## cpci_data<?>
+NET "H_AD_IO<17>"  LOC = "A18" | IOSTANDARD = LVCMOS2 ;  ## cpci_data<?>
+NET "H_AD_IO<18>"  LOC = "B18" | IOSTANDARD = LVCMOS2 ;  ## cpci_data<?>
+NET "H_AD_IO<19>"  LOC = "C22" | IOSTANDARD = LVCMOS2 ;  ## cpci_data<?>
+NET "H_AD_IO<1>"   LOC = "C14" | IOSTANDARD = LVCMOS2 ;  ## cpci_data<?>
+NET "H_AD_IO<20>"  LOC = "A19" | IOSTANDARD = LVCMOS2 ;  ## cpci_data<?>
+NET "H_AD_IO<21>"  LOC = "B19" | IOSTANDARD = LVCMOS2 ;  ## cpci_data<?>
+NET "H_AD_IO<22>"  LOC = "C18" | IOSTANDARD = LVCMOS2 ;  ## cpci_data<?>
+NET "H_AD_IO<23>"  LOC = "E20" | IOSTANDARD = LVCMOS2 ;  ## cpci_data<?>
+NET "H_AD_IO<24>"  LOC = "D21" | IOSTANDARD = LVCMOS2 ;  ## cpci_data<?>
+NET "H_AD_IO<25>"  LOC = "D22" | IOSTANDARD = LVCMOS2 ;  ## cpci_data<?>
+NET "H_AD_IO<26>"  LOC = "E22" | IOSTANDARD = LVCMOS2 ;  ## cpci_data<?>
+NET "H_AD_IO<27>"  LOC = "E21" | IOSTANDARD = LVCMOS2 ;  ## cpci_data<?>
+NET "H_AD_IO<28>"  LOC = "F21" | IOSTANDARD = LVCMOS2 ;  ## cpci_data<?>
+NET "H_AD_IO<29>"  LOC = "F22" | IOSTANDARD = LVCMOS2 ;  ## cpci_data<?>
+NET "H_AD_IO<2>"   LOC = "D14" | IOSTANDARD = LVCMOS2 ;  ## cpci_data<?>
+NET "H_AD_IO<30>"  LOC = "F20" | IOSTANDARD = LVCMOS2 ;  ## cpci_data<?>
+NET "H_AD_IO<31>"  LOC = "G18" | IOSTANDARD = LVCMOS2 ;  ## cpci_data<?>
+NET "H_AD_IO<3>"   LOC = "E14" | IOSTANDARD = LVCMOS2 ;  ## cpci_data<?>
+NET "H_AD_IO<4>"   LOC = "E15" | IOSTANDARD = LVCMOS2 ;  ## cpci_data<?>
+NET "H_AD_IO<5>"   LOC = "D15" | IOSTANDARD = LVCMOS2 ;  ## cpci_data<?>
+NET "H_AD_IO<6>"   LOC = "C15" | IOSTANDARD = LVCMOS2 ;  ## cpci_data<?>
+NET "H_AD_IO<7>"   LOC = "B15" | IOSTANDARD = LVCMOS2 ;  ## cpci_data<?>
+NET "H_AD_IO<8>"   LOC = "A15" | IOSTANDARD = LVCMOS2 ;  ## cpci_data<?>
+NET "H_AD_IO<9>"   LOC = "A16" | IOSTANDARD = LVCMOS2 ;  ## cpci_data<?>
 
 ################################################################################
 # CPCI-2
 ################################################################################
-NET "cpci_debug_data<0>"  LOC = "AB5" | IOSTANDARD = LVCMOS2 ;
-NET "cpci_debug_data<10>"  LOC = "AA8" | IOSTANDARD = LVCMOS2 ;
-NET "cpci_debug_data<11>"  LOC = "Y8" | IOSTANDARD = LVCMOS2 ;
-NET "cpci_debug_data<12>"  LOC = "W8" | IOSTANDARD = LVCMOS2 ;
-NET "cpci_debug_data<13>"  LOC = "V8" | IOSTANDARD = LVCMOS2 ;
-NET "cpci_debug_data<14>"  LOC = "V9" | IOSTANDARD = LVCMOS2 ;
-NET "cpci_debug_data<15>"  LOC = "W9" | IOSTANDARD = LVCMOS2 ;
-NET "cpci_debug_data<16>"  LOC = "AB13" | IOSTANDARD = LVCMOS2 ;
-NET "cpci_debug_data<17>"  LOC = "AA13" | IOSTANDARD = LVCMOS2 ;
-NET "cpci_debug_data<18>"  LOC = "Y13" | IOSTANDARD = LVCMOS2 ;
-NET "cpci_debug_data<19>"  LOC = "AA12" | IOSTANDARD = LVCMOS2 ;
-NET "cpci_debug_data<1>"  LOC = "W5" | IOSTANDARD = LVCMOS2 ;
-NET "cpci_debug_data<20>"  LOC = "Y12" | IOSTANDARD = LVCMOS2 ;
-NET "cpci_debug_data<21>"  LOC = "V12" | IOSTANDARD = LVCMOS2 ;
-NET "cpci_debug_data<22>"  LOC = "AB11" | IOSTANDARD = LVCMOS2 ;
-NET "cpci_debug_data<23>"  LOC = "V11" | IOSTANDARD = LVCMOS2 ;
-NET "cpci_debug_data<24>"  LOC = "W11" | IOSTANDARD = LVCMOS2 ;
-NET "cpci_debug_data<25>"  LOC = "V10" | IOSTANDARD = LVCMOS2 ;
-NET "cpci_debug_data<26>"  LOC = "AA10" | IOSTANDARD = LVCMOS2 ;
-NET "cpci_debug_data<27>"  LOC = "AB10" | IOSTANDARD = LVCMOS2 ;
-NET "cpci_debug_data<28>"  LOC = "AA9" | IOSTANDARD = LVCMOS2 ;
-NET "cpci_debug_data<29>"  LOC = "Y10" | IOSTANDARD = LVCMOS2 ;
-NET "cpci_debug_data<2>"  LOC = "AB6" | IOSTANDARD = LVCMOS2 ;
-NET "cpci_debug_data<30>"  LOC = "W10" | IOSTANDARD = LVCMOS2 ;
-NET "cpci_debug_data<31>"  LOC = "AB9" | IOSTANDARD = LVCMOS2 ;
-NET "cpci_debug_data<3>"  LOC = "AA6" | IOSTANDARD = LVCMOS2 ;
-NET "cpci_debug_data<4>"  LOC = "Y6" | IOSTANDARD = LVCMOS2 ;
-NET "cpci_debug_data<5>"  LOC = "W6" | IOSTANDARD = LVCMOS2 ;
-NET "cpci_debug_data<6>"  LOC = "V7" | IOSTANDARD = LVCMOS2 ;
-NET "cpci_debug_data<7>"  LOC = "W7" | IOSTANDARD = LVCMOS2 ;
-NET "cpci_debug_data<8>"  LOC = "Y7" | IOSTANDARD = LVCMOS2 ;
-NET "cpci_debug_data<9>"  LOC = "AA7" | IOSTANDARD = LVCMOS2 ;
-NET "cpci_dma_data<0>"  LOC = "M18" | IOSTANDARD = LVCMOS2 ;
-NET "cpci_dma_data<10>"  LOC = "R19" | IOSTANDARD = LVCMOS2 ;
-NET "cpci_dma_data<11>"  LOC = "R18" | IOSTANDARD = LVCMOS2 ;
-NET "cpci_dma_data<12>"  LOC = "P18" | IOSTANDARD = LVCMOS2 ;
-NET "cpci_dma_data<13>"  LOC = "P19" | IOSTANDARD = LVCMOS2 ;
-NET "cpci_dma_data<14>"  LOC = "T19" | IOSTANDARD = LVCMOS2 ;
-NET "cpci_dma_data<15>"  LOC = "T20" | IOSTANDARD = LVCMOS2 ;
-NET "cpci_dma_data<16>"  LOC = "T21" | IOSTANDARD = LVCMOS2 ;
-NET "cpci_dma_data<17>"  LOC = "R22" | IOSTANDARD = LVCMOS2 ;
-NET "cpci_dma_data<18>"  LOC = "T18" | IOSTANDARD = LVCMOS2 ;
-NET "cpci_dma_data<19>"  LOC = "U19" | IOSTANDARD = LVCMOS2 ;
-NET "cpci_dma_data<1>"  LOC = "M19" | IOSTANDARD = LVCMOS2 ;
-NET "cpci_dma_data<20>"  LOC = "U20" | IOSTANDARD = LVCMOS2 ;
-NET "cpci_dma_data<21>"  LOC = "V21" | IOSTANDARD = LVCMOS2 ;
-NET "cpci_dma_data<22>"  LOC = "V22" | IOSTANDARD = LVCMOS2 ;
-NET "cpci_dma_data<23>"  LOC = "U21" | IOSTANDARD = LVCMOS2 ;
-NET "cpci_dma_data<24>"  LOC = "U22" | IOSTANDARD = LVCMOS2 ;
-NET "cpci_dma_data<25>"  LOC = "AA22" | IOSTANDARD = LVCMOS2 ;
-NET "cpci_dma_data<26>"  LOC = "W21" | IOSTANDARD = LVCMOS2 ;
-NET "cpci_dma_data<27>"  LOC = "W22" | IOSTANDARD = LVCMOS2 ;
-NET "cpci_dma_data<28>"  LOC = "V20" | IOSTANDARD = LVCMOS2 ;
-NET "cpci_dma_data<29>"  LOC = "AA20" | IOSTANDARD = LVCMOS2 ;
-NET "cpci_dma_data<2>"  LOC = "N18" | IOSTANDARD = LVCMOS2 ;
-NET "cpci_dma_data<30>"  LOC = "AA19" | IOSTANDARD = LVCMOS2 ;
-NET "cpci_dma_data<31>"  LOC = "AB20" | IOSTANDARD = LVCMOS2 ;
-NET "cpci_dma_data<3>"  LOC = "M17" | IOSTANDARD = LVCMOS2 ;
-NET "cpci_dma_data<4>"  LOC = "N19" | IOSTANDARD = LVCMOS2 ;
-NET "cpci_dma_data<5>"  LOC = "N20" | IOSTANDARD = LVCMOS2 ;
-NET "cpci_dma_data<6>"  LOC = "N21" | IOSTANDARD = LVCMOS2 ;
-NET "cpci_dma_data<7>"  LOC = "P22" | IOSTANDARD = LVCMOS2 ;
-NET "cpci_dma_data<8>"  LOC = "P20" | IOSTANDARD = LVCMOS2 ;
-NET "cpci_dma_data<9>"  LOC = "P21" | IOSTANDARD = LVCMOS2 ;
-NET "cpci_dma_wr_en"    LOC = "Y18" | IOSTANDARD = LVCMOS2 ;
-NET "cpci_tx_full<0>"  LOC = "C13" | IOSTANDARD=LVCMOS2;
-NET "cpci_tx_full<1>"  LOC = "A13" | IOSTANDARD=LVCMOS2;
-NET "cpci_tx_full<2>"  LOC = "B13" | IOSTANDARD=LVCMOS2;#used by cpci_dma_vld_c2n
-NET "cpci_tx_full<3>"  LOC = "D13" | IOSTANDARD=LVCMOS2;#used by dma_q_nearly_full_n2c
-NET "cnet_err"         LOC = "AB14"| IOSTANDARD=LVCMOS2;#used by dma_q_nearly_full_n2c
+NET "H_AD_HIZ"      LOC = "M18" | IOSTANDARD = LVCMOS2 ;  ## cpci_dma_data<0>
+NET "H_CBE_IO<0>"   LOC = "M19" | IOSTANDARD = LVCMOS2 ;  ## cpci_dma_data<1>
+NET "H_CBE_IO<1>"   LOC = "N18" | IOSTANDARD = LVCMOS2 ;  ## cpci_dma_data<2>
+NET "H_CBE_IO<2>"   LOC = "M17" | IOSTANDARD = LVCMOS2 ;  ## cpci_dma_data<3>
+NET "H_CBE_IO<3>"   LOC = "N19" | IOSTANDARD = LVCMOS2 ;  ## cpci_dma_data<4>
+NET "H_CBE_HIZ"     LOC = "N20" | IOSTANDARD = LVCMOS2 ;  ## cpci_dma_data<5>
+NET "H_PAR_IO"      LOC = "N21" | IOSTANDARD = LVCMOS2 ;  ## cpci_dma_data<6>
+NET "H_PAR_HIZ"     LOC = "P22" | IOSTANDARD = LVCMOS2 ;  ## cpci_dma_data<7>
+NET "H_FRAME_IO"    LOC = "P20" | IOSTANDARD = LVCMOS2 ;  ## cpci_dma_data<8>
+NET "H_FRAME_HIZ"   LOC = "P21" | IOSTANDARD = LVCMOS2 ;  ## cpci_dma_data<9>
+NET "H_TRDY_IO"     LOC = "R19" | IOSTANDARD = LVCMOS2 ;  ## cpci_dma_data<10>
+NET "H_TRDY_HIZ"    LOC = "R18" | IOSTANDARD = LVCMOS2 ;  ## cpci_dma_data<11>
+NET "H_IRDY_IO"     LOC = "P18" | IOSTANDARD = LVCMOS2 ;  ## cpci_dma_data<12>
+NET "H_IRDY_HIZ"    LOC = "P19" | IOSTANDARD = LVCMOS2 ;  ## cpci_dma_data<13>
+NET "H_STOP_IO"     LOC = "T19" | IOSTANDARD = LVCMOS2 ;  ## cpci_dma_data<14>
+NET "H_STOP_HIZ"    LOC = "T20" | IOSTANDARD = LVCMOS2 ;  ## cpci_dma_data<15>
+NET "H_DEVSEL_IO"   LOC = "T21" | IOSTANDARD = LVCMOS2 ;  ## cpci_dma_data<16>
+NET "H_DEVSEL_HIZ"  LOC = "R22" | IOSTANDARD = LVCMOS2 ;  ## cpci_dma_data<17>
+NET "H_IDSEL_I"     LOC = "T18" | IOSTANDARD = LVCMOS2 ;  ## cpci_dma_data<18>
+NET "H_INTA_O"      LOC = "U19" | IOSTANDARD = LVCMOS2 ;  ## cpci_dma_data<19>
+NET "H_PERR_IO"     LOC = "U20" | IOSTANDARD = LVCMOS2 ;  ## cpci_dma_data<20>
+NET "H_PERR_HIZ"    LOC = "V21" | IOSTANDARD = LVCMOS2 ;  ## cpci_dma_data<21>
+NET "H_SERR_IO"     LOC = "V22" | IOSTANDARD = LVCMOS2 ;  ## cpci_dma_data<22>
+NET "H_SERR_HIZ"    LOC = "U21" | IOSTANDARD = LVCMOS2 ;  ## cpci_dma_data<23>
+NET "H_REQ_O"       LOC = "U22" | IOSTANDARD = LVCMOS2 ;  ## cpci_dma_data<24>
+NET "H_GNT_I"       LOC = "AA22"| IOSTANDARD = LVCMOS2 ;  ## cpci_dma_data<25>
+NET "h_cpci_id<0>"  LOC = "W21" | IOSTANDARD = LVCMOS2 ;  ## cpci_dma_data<26>
+NET "h_cpci_id<1>"  LOC = "W22" | IOSTANDARD = LVCMOS2 ;  ## cpci_dma_data<27>
+NET "h_cpci_id<2>"  LOC = "V20" | IOSTANDARD = LVCMOS2 ;  ## cpci_dma_data<28>
+NET "h_cpci_id<3>"  LOC = "AA20"| IOSTANDARD = LVCMOS2 ;  ## cpci_dma_data<29>
+NET "H_READY"       LOC = "AA19"| IOSTANDARD = LVCMOS2 ;  ## cpci_dma_data<30>
 
 ################################################################################
 # Configuration PINS
 ################################################################################
-NET "rp_cclk"      LOC = "Y14" | IOSTANDARD = LVCMOS2 ;
+NET "rp_cclk"      LOC = "Y14" | IOSTANDARD = LVCMOS2 ; ## rp_cclk or H_PCLK
 NET "rp_cs_b"      LOC = "AA14" | IOSTANDARD = LVCMOS2 ;
 NET "rp_data<0>"   LOC = "V13" | IOSTANDARD = LVCMOS2 ;
 NET "rp_data<1>"   LOC = "W14" | IOSTANDARD = LVCMOS2 ;
@@ -403,6 +328,7 @@ NET "rp_init_b"    LOC = "W16" | IOSTANDARD = LVCMOS2 ;
 NET "rp_prog_b"    LOC = "V15" | IOSTANDARD = LVCMOS2 ;
 NET "rp_rdwr_b"    LOC = "Y16" | IOSTANDARD = LVCMOS2 ;
 NET "allow_reprog" LOC = "D12" | IOSTANDARD = LVCMOS2 ;
+NET "H_PCLK2"      LOC = "E12" | IOSTANDARD = LVCMOS2 ; ## cpci_wr_rdy
 
 ################################################################################
 # SWITCH
@@ -412,6 +338,3 @@ NET "cpci_id<0>"   LOC = "AA5" | IOSTANDARD = LVCMOS2 ;
 NET "cpci_id<1>"   LOC = "AB4" | IOSTANDARD = LVCMOS2 ;
 NET "cpci_id<2>"   LOC = "AA4" | IOSTANDARD = LVCMOS2 ;
 NET "cpci_id<3>"   LOC = "AB3" | IOSTANDARD = LVCMOS2 ;
-
-NET "cpci_dma_nearly_full" LOC = "AA18" | IOSTANDARD = LVCMOS2 ;
-NET "phy_int_b" LOC = "D11" | IOSTANDARD = LVCMOS2 ;

@@ -10,15 +10,16 @@
   Copyright (c) 2011 macchan@sfc.wide.ad.jp, Inc.  All rights reserved.
 
 ***********************************************************************/
+//`define USE_GLOBAL_CLK
 `define ENABLE_EXPROM
-`define ENABLE_EXTBUS
-`define DEBUG
+//`define DEBUG
 
-module pci_top (
-	input         RST_I,
+module pci_sp2_top (
+	input         CLK,
+
+	input         RST_I,		// PCI Ports -- do not modify names!
 	input         PCLK,
-
-	inout  [31:0] AD_IO,            // PCI Ports -- do not modify names!
+	inout  [31:0] AD_IO,
 	inout   [3:0] CBE_IO,
 	inout         PAR_IO,
 	inout         FRAME_IO,
@@ -33,21 +34,36 @@ module pci_top (
 	output        REQ_O,
 	input         GNT_I,
 
-	input         cpci_clk,		// CPCI
-	output        cpci_reset,
+	output        H_RST_I,		// Host Ports -- do not modify names!
+	output        H_PCLK2,		// Not Global Clock Port
+	inout  [31:0] H_AD_IO,
+	input         H_AD_HIZ,
+	inout   [3:0] H_CBE_IO,
+	input         H_CBE_HIZ,
+	inout         H_PAR_IO,
+	input         H_PAR_HIZ,
+	inout         H_FRAME_IO,
+	input         H_FRAME_HIZ,
+	inout         H_TRDY_IO,
+	input         H_TRDY_HIZ,
+	inout         H_IRDY_IO,
+	input         H_IRDY_HIZ,
+	inout         H_STOP_IO,
+	input         H_STOP_HIZ,
+	inout         H_DEVSEL_IO,
+	input         H_DEVSEL_HIZ,
+	output        H_IDSEL_I,
+	input         H_INTA_O,
+	inout         H_PERR_IO,
+	input         H_PERR_HIZ,
+	inout         H_SERR_IO,
+	input         H_SERR_HIZ,
+	input         H_REQ_O,
+	output        H_GNT_I,
 
-	input  [31:0] cpci_addr,	// CPCI-1
-	input  [31:0] cpci_data,
-	output        cpci_rd_rdy,
-	output        cpci_wr_rdy,
-	input         cpci_req,
+	input         H_READY,
 
-	output [31:0] cpci_debug_data,	// CPCI-2
-	output [31:0] cpci_dma_data,
-	input         cpci_dma_wr_en,	// _read enable
-	output        cnet_err,		// empty
-
-	output        rp_cclk,		// Reprogramming signals
+	output        rp_cclk,		// Reprogramming signals or H_PCLK (Global Clock)
 	output        rp_prog_b,
 	input         rp_init_b,
 	output        rp_cs_b,
@@ -59,17 +75,22 @@ module pci_top (
 
 	input         cpci_jmpr,
 	input [3:0]   cpci_id,			// Rotary ID
-	output [3:0]  cpci_tx_full,		// ID through to Virtex
-	output        cpci_dma_nearly_full,	// Repl Mode
-	input         phy_int_b,		// Phy Status?
  
 	output        LED
 );
 
 assign reset = ~RST_I;
-wire pclk_ibuf, pclk;
+`ifdef USE_GLOBAL_CLK
+wire pclk_ibuf;
 IBUF ibuf_pclk (.I(PCLK),  .O(pclk_ibuf));
-BUFG bufg_pclk (.I(pclk_ibuf), .O(pclk));
+BUFG bufg_pclk (.I(pclk_ibuf), .O(rp_cclk));
+assign H_PCLK2 = 1'bz;
+`else
+assign rp_cclk= 1'bz;
+wire pclk;
+IBUFG ibuf_pclk (.I(PCLK),  .O(pclk));
+OBUF bufg_pclk (.I(pclk), .O(H_PCLK2));
+`endif
 
 //-----------------------------------
 // PCI register
@@ -91,40 +112,15 @@ reg STOP_Hiz             = 1'b1;
 reg STOP_Port            = 1'b1;
 
 reg REQ_Port             = 1'b1;
-reg PCIMSTAD_Hiz         = 1'b1;
-wire [31:0] PCIMSTAD_Port;
 reg CBE_Hiz              = 1'b1;
 wire [3:0] CBE_Port;
 reg FRAME_Hiz            = 1'b1;
 reg FRAME_Port           = 1'b1;
 reg IRDY_Hiz             = 1'b1;
 reg IRDY_Port            = 1'b1;
-reg PAR_Hiz              = 1'b1;
 reg PAR_Port             = 1'b0;
+reg PAR_Hiz              = 1'b1;
 
-//-----------------------------------
-// Initiator register
-//-----------------------------------
-reg MST_Start            = 1'b0;
-reg MST_Enable           = 1'b0;
-reg MST_Busy             = 1'b0;
-reg MST_ReadWrite        = 1'b0;
-reg MST_Abort            = 1'b0;
-reg TGT_Abort            = 1'b0;
-reg MST_IntStat          = 1'b0;
-reg MST_IntClr           = 1'b0;
-reg MST_IntMask          = 1'b0;
-reg [3:0] DEVSEL_Count   = 4'd0;
-reg Retry                = 1'b0;
-
-wire [31:2] MST_Address;
-reg [31:0] MST_WriteData = 32'h0;
-reg [31:0] MST_ReadData  = 32'h0;
-reg [31:2] MST_MemStart  = 30'b111111111111111111111111111111;
-reg [31:2] MST_MemEnd    = 30'h0;
-reg [31:2] MST_MemOffset = 30'h0;
-
-reg REP_Mode             = 1'b0;
 reg LED_Port             = 1'b0;
 
 parameter PCI_IO_CYCLE		= 3'b001;
@@ -146,15 +142,6 @@ parameter TGT_ACC_COMPLETE	= 3'h5;
 parameter TGT_DISCONNECT	= 3'h6;
 parameter TGT_TURN_AROUND	= 3'h7;
 
-parameter INI_IDLE		= 3'h0;
-//parameter INI_BUS_PARK	= 3'h1;
-parameter INI_WAIT_GNT		= 3'h1;
-parameter INI_ADDR2DATA		= 3'h2;
-parameter INI_WAIT_DEVSEL	= 3'h3;
-parameter INI_WAIT_COMPLETE	= 3'h4;
-parameter INI_ABORT		= 3'h5;
-parameter INI_TURN_AROUND	= 3'h6;
-
 parameter SEQ_IDLE		= 3'b000;
 parameter SEQ_IO_ACCESS		= 3'b001;
 parameter SEQ_MEM_ACCESS	= 3'b010;
@@ -163,8 +150,7 @@ parameter SEQ_ROM_ACCESS	= 3'b100;
 parameter SEQ_COMPLETE		= 3'b111;
 
 reg [2:0] target_next_state = TGT_IDLE;
-reg [2:0] initiator_next_state = INI_IDLE;
-reg [2:0] seq_next_state = SEQ_IDLE;
+reg [2:0] seq_next_state    = SEQ_IDLE;
 
 //-----------------------------------
 // PCI configuration parameter/registers
@@ -221,122 +207,6 @@ rom rom_inst (
 `else
 	assign dout[31:0] = 32'hcdab3412;
 `endif
-
-//-----------------------------------
-// Asynchronous FIFO
-//-----------------------------------
-wire [63:0] dataout;
-wire empty;
-reg readen = 1'b0;
-wire full_out;
-asfifo #(
-		.DATA_WIDTH(64),
-		.ADDRESS_WIDTH(4)
-) asfifo1_inst (
-	.Data_out(dataout),
-	.Empty_out(empty),
-	.ReadEn_in(readen),
-	.RClk(pclk),
-
-	.Data_in({cpci_addr[31:0], cpci_data[31:0]}),
-	.Full_out(full_out),
-	.WriteEn_in(~cpci_req),
-	.WClk(cpci_clk),
-	.Clear_in(reset)
-);
-assign cpci_wr_rdy = ~full_out;
-
-reg [31:2] MST_ReadAddr  = 30'h0;
-reg [31:2] MST_WriteAddr = 30'h0;
-
-wire full_out2;
-reg fifo2_wen = 1'b0;
-asfifo #(
-		.DATA_WIDTH(64),
-		.ADDRESS_WIDTH(4)
-) asfifo2_inst (
-	.Data_out({cpci_debug_data[31:0], cpci_dma_data[31:0]}),
-	.Empty_out(cnet_err),
-	.ReadEn_in(~cpci_dma_wr_en),
-	.RClk(cpci_clk),
-
-	.Data_in({MST_ReadAddr[31:2], 2'b0, MST_ReadData[31:0]}),
-	.Full_out(full_out2),
-	.WriteEn_in(fifo2_wen),
-	.WClk(pclk),
-	.Clear_in(reset)
-);
-
-
-//-----------------------------------
-// Systetm Sequencer
-//-----------------------------------
-assign MST_Address = MST_ReadWrite ? MST_WriteAddr : (MST_ReadAddr + MST_MemOffset);
-
-reg [2:0] sys_next_state = 3'h0;
-parameter SYS_IDLE		= 3'b000;
-parameter SYS_READ1		= 3'b001;
-parameter SYS_READ2		= 3'b010;
-parameter SYS_WRITE1		= 3'b011;
-parameter SYS_WRITE2		= 3'b100;
-
-always @(posedge pclk) begin
-	if (reset) begin
-		sys_next_state <= SYS_IDLE;
-		MST_Start     <= 1'b0;
-		MST_ReadAddr  <= 30'h0;
-		MST_WriteAddr <= 30'h0;
-		MST_ReadWrite <= 1'b0;
-		MST_WriteData <= 32'h0;
-		readen        <= 1'b0;
-		fifo2_wen     <= 1'b0;
-	end else begin
-		readen        <= 1'b0;
-		fifo2_wen     <= 1'b0;
-		case (sys_next_state)
-			SYS_IDLE: begin
-				if (MST_ReadAddr < MST_MemStart || MST_ReadAddr >= MST_MemEnd)
-					MST_ReadAddr <= MST_MemStart;
-				if (initiator_next_state == INI_IDLE && ~Retry) begin
-					if (empty == 1'b1) begin
-						if (~full_out2 && MST_Enable) begin
-							MST_Start      <= 1'b1;
-							MST_ReadWrite  <= 1'b0;
-							sys_next_state <= SYS_READ1;
-						end
-					end else begin
-						MST_Start      <= 1'b1;
-						readen         <= 1'b1;
-						MST_ReadWrite  <= 1'b1;
-						sys_next_state <= SYS_WRITE1;
-					end
-				end
-			end
-			SYS_READ1: begin
-				if (initiator_next_state == INI_TURN_AROUND & ~Retry) begin
-					fifo2_wen      <= 1'b1;
-					MST_Start      <= 1'b0;
-					sys_next_state <= SYS_READ2;
-				end
-			end
-			SYS_READ2: begin
-				MST_ReadAddr   <= MST_ReadAddr + 1;
-				sys_next_state <= SYS_IDLE;
-			end
-			SYS_WRITE1: begin
-				MST_WriteAddr[31:2] <= dataout[63:34];
-				MST_WriteData[31:0] <= dataout[31:0];
-				sys_next_state <= SYS_WRITE2;
-			end
-			SYS_WRITE2: begin
-				if (initiator_next_state == INI_TURN_AROUND & ~Retry) begin
-					MST_Start      <= 1'b0;
-					sys_next_state <= SYS_IDLE;
-				end
-			end
-		endcase
-	end
-end
 
 //-----------------------------------
 // Target
@@ -427,163 +297,6 @@ always @(posedge pclk) begin
 end
 
 //-----------------------------------
-// Initiator
-//-----------------------------------
-assign PCIMSTAD_Port = ~FRAME_Port ? {MST_Address, 2'b00} : MST_WriteData;
-assign CBE_Port      = ~FRAME_Port ? {PCI_MEM_CYCLE, MST_ReadWrite} : 4'b0000;
-
-always @(posedge pclk) begin
-	if (reset) begin
-		MST_ReadData <= 32'hffffffff;
-	end else begin
-		if (MST_Abort) begin
-			MST_ReadData <= 32'hffffffff;
-		end else begin
-			if (~MST_ReadWrite & ~IRDY_Port & ~TRDY_IO)
-				MST_ReadData <= AD_IO;
-		end
-	end
-end
-
-always @(posedge pclk) begin
-	if (reset) begin
-		initiator_next_state <= INI_IDLE;
-		// Initiator Registers
-		PCIMSTAD_Hiz         <= 1'b1;
-		CBE_Hiz              <= 1'b1;
-		FRAME_Hiz            <= 1'b1;
-		FRAME_Port           <= 1'b1;
-		IRDY_Hiz             <= 1'b1;
-		IRDY_Port            <= 1'b1;
-		REQ_Port             <= 1'b1;
-		MST_Busy             <= 1'b0;
-		MST_Abort            <= 1'b0;
-		TGT_Abort            <= 1'b0;
-		DEVSEL_Count         <= 4'd0;
-		Retry                <= 1'b0;
-	end else begin
-		case (initiator_next_state)
-			INI_IDLE: begin
-				if (CFG_Cmd_Mst) begin
-					if (MST_Start | Retry) begin
-						MST_Busy <= 1'b1;
-						if (~GNT_I & FRAME_IO & IRDY_IO) begin
-							PCIMSTAD_Hiz <= 1'b0;
-							CBE_Hiz      <= 1'b0;
-							FRAME_Port   <= 1'b0;
-							FRAME_Hiz    <= 1'b0;
-							initiator_next_state <= INI_ADDR2DATA;
-						end else begin
-							REQ_Port <= 1'b0;
-							initiator_next_state <= INI_WAIT_GNT;
-						end
-					end else begin
-						if (~GNT_I) begin
-							PCIMSTAD_Hiz <= 1'b0;
-							CBE_Hiz     <= 1'b0;
-						end else begin
-							PCIMSTAD_Hiz <= 1'b1;
-							CBE_Hiz     <= 1'b1;
-						end
-					end
-				end else begin
-					if (MST_Start) begin
-						MST_Busy <= 1'b1;
-						initiator_next_state <= INI_TURN_AROUND;
-					end
-				end
-			end
-			INI_WAIT_GNT: begin
-				if (~GNT_I & FRAME_IO & IRDY_IO) begin
-					REQ_Port     <= 1'b1;
-					PCIMSTAD_Hiz <= 1'b0;
-					CBE_Hiz      <= 1'b0;
-					FRAME_Port   <= 1'b0;
-					FRAME_Hiz    <= 1'b0;
-					initiator_next_state <= INI_ADDR2DATA;
-				end
-			end
-			INI_ADDR2DATA: begin
-				FRAME_Port  <= 1'b1;
-				IRDY_Port   <= 1'b0;
-				IRDY_Hiz    <= 1'b0;
-				if (~MST_ReadWrite)
-					PCIMSTAD_Hiz <= 1'b1;
-				TGT_Abort <= 1'b0;
-				MST_Abort <= 1'b0;
-				Retry     <= 1'b0;
-				initiator_next_state <= INI_WAIT_DEVSEL;
-			end
-			INI_WAIT_DEVSEL: begin
-				if (~DEVSEL_IO) begin
-					if (~TRDY_IO) begin
-						FRAME_Hiz    <= 1'b1;
-						IRDY_Port    <= 1'b1;
-						PCIMSTAD_Hiz <= 1'b1;
-						CBE_Hiz      <= 1'b1;
-						MST_Busy     <= 1'b0;
-						initiator_next_state <= INI_TURN_AROUND;
-					end else begin
-						if (~STOP_IO)
-							initiator_next_state <= INI_ABORT;
-						else
-							initiator_next_state <= INI_WAIT_COMPLETE;
-					end
-				end else begin
-					if (DEVSEL_Count == 4'h03) begin
-						MST_Abort <= 1'b1;
-						initiator_next_state <= INI_ABORT;
-					end else begin
-						DEVSEL_Count <= DEVSEL_Count + 1;
-					end
-				end
-			end
-			INI_WAIT_COMPLETE: begin
-				if (~DEVSEL_IO) begin
-					if (~TRDY_IO) begin
-						FRAME_Hiz    <= 1'b1;
-						IRDY_Port    <= 1'b1;
-						PCIMSTAD_Hiz <= 1'b1;
-						CBE_Hiz      <= 1'b1;
-						MST_Busy     <= 1'b0;
-						initiator_next_state <= INI_TURN_AROUND;
-					end else
-						if (~STOP_IO)
-							initiator_next_state <= INI_ABORT;
-				end else begin
-					if (~STOP_IO) begin
-						TGT_Abort <= 1'b1;
-					end else begin
-						MST_Abort <= 1'b1;
-						TGT_Abort <= 1'b1;
-					end
-					initiator_next_state <= INI_ABORT;
-				end
-			end
-			INI_ABORT: begin
-				FRAME_Hiz    <= 1'b1;
-				IRDY_Port    <= 1'b1;
-				PCIMSTAD_Hiz <= 1'b1;
-				CBE_Hiz      <= 1'b1;
-				if (TGT_Abort | MST_Abort)
-					MST_Busy <= 1'b0;
-				else
-					Retry <= 1'b1;
-				initiator_next_state <= INI_TURN_AROUND;
-			end
-			INI_TURN_AROUND: begin
-				IRDY_Hiz     <= 1'b1;
-				DEVSEL_Count <= 4'h0;
-				initiator_next_state <= INI_IDLE;
-			end
-			default:
-				initiator_next_state <= INI_IDLE;
-		endcase
-	end
-end
-
-					 
-//-----------------------------------
 // Sequencer
 //-----------------------------------
 always @(posedge pclk) begin
@@ -602,23 +315,9 @@ always @(posedge pclk) begin
 		CFG_Int_Line <= 0;
 		CFG_Sta_MAbt_Clr <= 1'b0;
 		CFG_Sta_TAbt_Clr <= 1'b0;
-		// Initiator Registers
-		MST_Enable    <= 1'b0;
-		MST_IntStat   <= 1'b0;
-		MST_IntClr    <= 1'b0;
-		MST_IntMask   <= 1'b0;
-		REP_Mode      <= 1'b0;
 
 		Local_DTACK   <= 1'b0;
-
-		MST_MemStart  <= 30'h40000 + (cpci_id<<6);
-		MST_MemEnd    <= 30'h40040 + (cpci_id<<6);
-		MST_MemOffset <= 30'h00000000;
 	end else begin
-		if (MST_MemStart == 30'b111111111111111111111111111111) begin
-			MST_MemStart  <= 30'h40000 + (cpci_id<<6);
-			MST_MemEnd    <= 30'h40040 + (cpci_id<<6);
-		end
 		case (seq_next_state)
 			SEQ_IDLE: begin
 				if (Local_Bus_Start) begin
@@ -634,62 +333,35 @@ always @(posedge pclk) begin
 			end
 			SEQ_IO_ACCESS: begin
 				if (~PCI_BusCommand[0]) begin
-					case (PCI_Address[4:2])
-						3'b000:
-							AD_Port[31:0] <= {MST_IntStat,MST_IntMask,14'b0,MST_Abort,TGT_Abort,11'b0,MST_Busy,REP_Mode,MST_Enable};
-						3'b001:
-							AD_Port[31:0] <= {MST_MemStart, 2'b00};
-						3'b010:
-							AD_Port[31:0] <= {MST_MemEnd, 2'b00};
-						3'b011:
-							AD_Port[31:0] <= {MST_MemOffset, 2'b00};
+					case (PCI_Address[3:2])
+						2'b00:
+							AD_Port[31:0] <= 32'h33221100;
+						2'b01:
+							AD_Port[31:0] <= 32'h77665544;
 						default:
 							AD_Port[31:0] <= 32'hcdab3412;
 					endcase
 				end else begin
-					case (PCI_Address[4:2])
-						3'b000: begin
+					case (PCI_Address[3:2])
+						2'b00: begin
 							if (~CBE_IO[3]) begin
-								MST_IntClr  <= AD_IO[31];
-								MST_IntMask <= AD_IO[30];
+//								MST_IntClr  <= AD_IO[31];
+//								MST_IntMask <= AD_IO[30];
 							end
 							if (~CBE_IO[0]) begin
-								REP_Mode      <= AD_IO[1];
-								MST_Enable    <= AD_IO[0];
+//								REP_Mode      <= AD_IO[1];
+//								MST_Enable    <= AD_IO[0];
 							end
 						end
-						3'b001: begin
-							MST_Enable    <= 1'b0;
-							if (~CBE_IO[3])
-								MST_MemStart[31:24] <= AD_IO[31:24];
-							if (~CBE_IO[2])
-								MST_MemStart[23:16] <= AD_IO[23:16];
-							if (~CBE_IO[1])
-								MST_MemStart[15: 8] <= AD_IO[15: 8];
-							if (~CBE_IO[0])
-								MST_MemStart[ 7: 2] <= AD_IO[ 7: 2];
-						end
-						3'b010: begin
-							MST_Enable    <= 1'b0;
-							if (~CBE_IO[3])
-								MST_MemEnd[31:24] <= AD_IO[31:24];
-							if (~CBE_IO[2])
-								MST_MemEnd[23:16] <= AD_IO[23:16];
-							if (~CBE_IO[1])
-								MST_MemEnd[15: 8] <= AD_IO[15: 8];
-							if (~CBE_IO[0])
-								MST_MemEnd[ 7: 2] <= AD_IO[ 7: 2];
-						end
-						3'b011: begin
-							MST_Enable    <= 1'b0;
-							if (~CBE_IO[3])
-								MST_MemOffset[31:24] <= AD_IO[31:24];
-							if (~CBE_IO[2])
-								MST_MemOffset[23:16] <= AD_IO[23:16];
-							if (~CBE_IO[1])
-								MST_MemOffset[15: 8] <= AD_IO[15: 8];
-							if (~CBE_IO[0])
-								MST_MemOffset[ 7: 2] <= AD_IO[ 7: 2];
+						2'b01: begin
+//							if (~CBE_IO[3])
+//								MST_MemStart[31:24] <= AD_IO[31:24];
+//							if (~CBE_IO[2])
+//								MST_MemStart[23:16] <= AD_IO[23:16];
+//							if (~CBE_IO[1])
+//								MST_MemStart[15: 8] <= AD_IO[15: 8];
+//							if (~CBE_IO[0])
+//								MST_MemStart[ 7: 2] <= AD_IO[ 7: 2];
 						end
 						default:
 							LED_Port <= AD_IO[0];
@@ -819,49 +491,55 @@ always @(posedge pclk) begin
 end
 
 //-----------------------------------
-// Parity Generator
-//-----------------------------------
+//// Parity Generator
+////-----------------------------------
 assign TGT_temp_PAR_DB  = ^AD_Port;
 assign TGT_temp_PAR_CBE = ^CBE_IO;
 assign TGT_PAR = TGT_temp_PAR_DB ^ TGT_temp_PAR_CBE;
-assign INI_temp_PAR_DB  = ^PCIMSTAD_Port;
-assign INI_temp_PAR_CBE = ^CBE_Port;
-assign INI_PAR = INI_temp_PAR_DB ^ INI_temp_PAR_CBE;
 always @(posedge pclk) begin
-	if (reset) begin
-		PAR_Hiz   <= 1'b1;
-		PAR_Port  <= 1'b0;
-	end else begin
-		if (~PCIMSTAD_Hiz)
-			PAR_Port <= INI_PAR;
-		else
-			PAR_Port <= TGT_PAR;
-		if (PCIMSTAD_Hiz & AD_Hiz)
-			PAR_Hiz <= 1'b1;
-		else
-			PAR_Hiz <= 1'b0;
-	end
+        if (reset) begin
+                PAR_Hiz   <= 1'b1;
+                PAR_Port  <= 1'b0;
+        end else begin
+                PAR_Port <= TGT_PAR;
+                if (AD_Hiz)
+                        PAR_Hiz <= 1'b1;
+                else
+                        PAR_Hiz <= 1'b0;
+        end
 end
 
 // PCI BUS
-assign CBE_IO    = CBE_Hiz   ? 4'hz : CBE_Port;
-assign AD_IO     = (AD_Hiz & PCIMSTAD_Hiz) ? 32'hz : (AD_Hiz ? PCIMSTAD_Port : AD_Port);
-assign PAR_IO    = PAR_Hiz   ? 1'hz : PAR_Port;
-assign FRAME_IO  = FRAME_Hiz ? 1'hz : FRAME_Port;
-assign IRDY_IO   = IRDY_Hiz  ? 1'hz : IRDY_Port;
-assign TRDY_IO   = TRDY_Hiz  ? 1'hz : TRDY_Port;
-assign STOP_IO   = STOP_Hiz  ? 1'hz : STOP_Port;
-assign DEVSEL_IO = DEVSEL_Hiz? 1'hz : DEVSEL_Port;
-assign INTA_O    = 1'hz;
-assign REQ_O     = REQ_Port;
-assign LED       = ~LED_Port;
+assign AD_IO       = AD_Hiz        ? 32'hz: AD_Port;
+assign CBE_IO      = CBE_Hiz       ? 4'hz : CBE_Port;
+assign PAR_IO      = PAR_Hiz       ? 1'hz : PAR_Port;
+assign FRAME_IO    = FRAME_Hiz     ? 1'hz : FRAME_Port;
+assign IRDY_IO     = IRDY_Hiz      ? 1'hz : IRDY_Port;
+assign TRDY_IO     = TRDY_Hiz      ? 1'hz : TRDY_Port;
+assign STOP_IO     = STOP_Hiz      ? 1'hz : STOP_Port;
+assign DEVSEL_IO   = DEVSEL_Hiz    ? 1'hz : DEVSEL_Port;
+assign INTA_O      = 1'hz;
+assign PERR_IO     = 1'hz;
+assign SERR_IO     = 1'hz;
+assign REQ_O       = REQ_Port;
 
 // Virtex 2 Pro BUS
-assign cpci_reset = reset;
-assign cpci_rd_rdy = 1'b1;
+assign H_RST_I     = RST_I;
+assign H_AD_IO     = H_AD_HIZ      ? AD_IO     : 32'hz;
+assign H_CBE_IO    = H_CBE_HIZ     ? CBE_IO    : 4'hz;
+assign H_PAR_IO    = H_PAR_HIZ     ? PAR_IO    : 1'hz;
+assign H_FRAME_IO  = H_FRAME_HIZ   ? FRAME_IO  : 1'hz;
+assign H_TRDY_IO   = H_TRDY_HIZ    ? TRDY_IO   : 1'hz;
+assign H_IRDY_IO   = H_IRDY_HIZ    ? IRDY_IO   : 1'hz;
+assign H_STOP_IO   = H_STOP_HIZ    ? STOP_IO   : 1'hz;
+assign H_DEVSEL_IO = H_DEVSEL_HIZ  ? DEVSEL_IO : 1'hz;
+assign H_IDSEL_I   = IDSEL_I;
+assign H_PERR_IO   = H_PERR_HIZ    ? PERR_IO   : 1'hz;
+assign H_SERR_IO   = H_SERR_HIZ    ? SERR_IO   : 1'hz;
+assign H_GNT_I     = GNT_I;
 
 // Reprograming singnals
-assign rp_cclk = 1'bz;
+//assign rp_cclk = 1'bz;
 assign rp_prog_b = 1'bz;
 assign rp_cs_b = 1'bz;
 assign rp_rdwr_b = 1'b0;
@@ -869,8 +547,8 @@ assign rp_data = 8'bz;
 assign allow_reprog = 1'bz;
 
 // Switch
-assign cpci_tx_full =  cpci_id;
-assign cpci_dma_nearly_full = REP_Mode;
+assign h_cpci_id = cpci_id;
+assign LED       = ~LED_Port;
 
 `ifdef DEBUG
 //-----------------------------------
@@ -903,16 +581,8 @@ assign DATA[45]     = SERR_IO;
 assign DATA[46]     = REQ_O;
 assign DATA[47]     = GNT_I;
 assign DATA[50:48]  = target_next_state;
-assign DATA[53:51]  = initiator_next_state;
 assign DATA[54]     = AD_Hiz;
-assign DATA[55]     = PCIMSTAD_Hiz;
-assign DATA[56]     = MST_Start;
-assign DATA[57]     = empty;
-assign DATA[58]     = readen;
-assign DATA[59]     = TGT_PAR;
-assign DATA[63:60]  = DEVSEL_Count[3:0];
 assign TRIG[ 0]     = FRAME_IO;
-assign TRIG[ 1]     = MST_Start;
 assign TRIG[ 2]     = Hit_IO;
 assign TRIG[ 3]     = 1'b0;
 assign TRIG[ 4]     = CBE_IO[0];
