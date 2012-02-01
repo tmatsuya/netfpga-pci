@@ -308,7 +308,8 @@ NET "h_cpci_id<0>"  LOC = "W21" | IOSTANDARD = LVCMOS2 ;  ## cpci_dma_data<26>
 NET "h_cpci_id<1>"  LOC = "W22" | IOSTANDARD = LVCMOS2 ;  ## cpci_dma_data<27>
 NET "h_cpci_id<2>"  LOC = "V20" | IOSTANDARD = LVCMOS2 ;  ## cpci_dma_data<28>
 NET "h_cpci_id<3>"  LOC = "AA20"| IOSTANDARD = LVCMOS2 ;  ## cpci_dma_data<29>
-NET "H_READY"       LOC = "AA19"| IOSTANDARD = LVCMOS2 ;  ## cpci_dma_data<30>
+NET "PASS_REQ"      LOC = "AA19"| IOSTANDARD = LVCMOS2 ;  ## cpci_dma_data<30>
+NET "PASS_READY"    LOC = "AB20"| IOSTANDARD = LVCMOS2 ;  ## cpci_dma_data<31>
 
 ################################################################################
 # Configuration PINS

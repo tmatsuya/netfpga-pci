@@ -1,6 +1,6 @@
 /***********************************************************************
 
-  File:   pci_top.v
+  File:   pci_sp2_top.v
   Rev:    3.1.161
 
   This is the top-level template file for Verilog designs.
@@ -61,7 +61,8 @@ module pci_sp2_top (
 	input         H_REQ_O,
 	output        H_GNT_I,
 
-	input         H_READY,
+	input         H_PASS_REQ,
+	output        H_PASS_READY,
 
 	output        rp_cclk,		// Reprogramming signals or H_PCLK (Global Clock)
 	output        rp_prog_b,
@@ -75,6 +76,7 @@ module pci_sp2_top (
 
 	input         cpci_jmpr,
 	input [3:0]   cpci_id,			// Rotary ID
+	output [3:0]  h_cpci_id,
  
 	output        LED
 );
@@ -122,6 +124,8 @@ reg PAR_Port             = 1'b0;
 reg PAR_Hiz              = 1'b1;
 
 reg LED_Port             = 1'b0;
+
+reg pass                 = 1'b0;	// pass-trough
 
 parameter PCI_IO_CYCLE		= 3'b001;
 parameter PCI_IO_READ_CYCLE	= 4'b0010;
@@ -228,12 +232,13 @@ always @(posedge pclk) begin
 	end else begin
 		case (target_next_state)
 			TGT_IDLE: begin
-				if (~FRAME_IO & IRDY_IO) begin
+				if (~FRAME_IO & IRDY_IO & ~pass) begin
 					PCI_BusCommand <= CBE_IO;
 					PCI_Address <= AD_IO;
 					PCI_IDSel <= IDSEL_I;
 					target_next_state <= TGT_ADDR_COMPARE;
-				end
+				end else
+					pass <= H_PASS_REQ;
 			end
 			TGT_ADDR_COMPARE: begin
 				if (Hit_Device) begin
@@ -510,45 +515,46 @@ always @(posedge pclk) begin
 end
 
 // PCI BUS
-assign AD_IO       = AD_Hiz        ? 32'hz: AD_Port;
-assign CBE_IO      = CBE_Hiz       ? 4'hz : CBE_Port;
-assign PAR_IO      = PAR_Hiz       ? 1'hz : PAR_Port;
-assign FRAME_IO    = FRAME_Hiz     ? 1'hz : FRAME_Port;
-assign IRDY_IO     = IRDY_Hiz      ? 1'hz : IRDY_Port;
-assign TRDY_IO     = TRDY_Hiz      ? 1'hz : TRDY_Port;
-assign STOP_IO     = STOP_Hiz      ? 1'hz : STOP_Port;
-assign DEVSEL_IO   = DEVSEL_Hiz    ? 1'hz : DEVSEL_Port;
-assign INTA_O      = 1'hz;
-assign PERR_IO     = 1'hz;
-assign SERR_IO     = 1'hz;
-assign REQ_O       = REQ_Port;
+assign AD_IO      = pass ? (H_AD_HIZ     ? 32'hz: H_AD_IO)  : (AD_Hiz      ? 32'hz: AD_Port);
+assign CBE_IO     = pass ? (H_CBE_HIZ    ? 4'hz : H_CBE_IO) : (CBE_Hiz     ? 4'hz : CBE_Port);
+assign PAR_IO     = pass ? (H_PAR_HIZ    ? 1'hz : H_PAR_IO) : (PAR_Hiz     ? 1'hz : PAR_Port);
+assign FRAME_IO   = pass ? (H_FRAME_HIZ  ? 1'Hz : H_FRAME_IO) : (FRAME_Hiz ? 1'hz : FRAME_Port);
+assign TRDY_IO    = pass ? (H_TRDY_HIZ   ? 1'hz : H_TRDY_IO) : (TRDY_Hiz   ? 1'hz : TRDY_Port);
+assign IRDY_IO    = pass ? (H_IRDY_HIZ   ? 1'hz : H_IRDY_IO) : (IRDY_Hiz   ? 1'hz : IRDY_Port);
+assign STOP_IO    = pass ? (H_STOP_HIZ   ? 1'hz : H_STOP_IO) : (STOP_Hiz   ? 1'hz : STOP_Port);
+assign DEVSEL_IO  = pass ? (H_DEVSEL_HIZ ? 1'hz : H_DEVSEL_IO) : (DEVSEL_Hiz ? 1'hz : DEVSEL_Port);
+assign INTA_O     = pass ? (H_INTA_O) : (1'hz);
+assign PERR_IO    = pass ? (H_PERR_HIZ   ? 1'hz : H_PERR_IO) : (1'hz);
+assign SERR_IO    = pass ? (H_SERR_HIZ   ? 1'hz : H_SERR_IO) : (1'hz);
+assign REQ_O      = pass ? (H_REQ_O) : (REQ_Port);
 
 // Virtex 2 Pro BUS
-assign H_RST_I     = RST_I;
-assign H_AD_IO     = H_AD_HIZ      ? AD_IO     : 32'hz;
-assign H_CBE_IO    = H_CBE_HIZ     ? CBE_IO    : 4'hz;
-assign H_PAR_IO    = H_PAR_HIZ     ? PAR_IO    : 1'hz;
-assign H_FRAME_IO  = H_FRAME_HIZ   ? FRAME_IO  : 1'hz;
-assign H_TRDY_IO   = H_TRDY_HIZ    ? TRDY_IO   : 1'hz;
-assign H_IRDY_IO   = H_IRDY_HIZ    ? IRDY_IO   : 1'hz;
-assign H_STOP_IO   = H_STOP_HIZ    ? STOP_IO   : 1'hz;
-assign H_DEVSEL_IO = H_DEVSEL_HIZ  ? DEVSEL_IO : 1'hz;
-assign H_IDSEL_I   = IDSEL_I;
-assign H_PERR_IO   = H_PERR_HIZ    ? PERR_IO   : 1'hz;
-assign H_SERR_IO   = H_SERR_HIZ    ? SERR_IO   : 1'hz;
-assign H_GNT_I     = GNT_I;
+assign H_RST_I    = RST_I;
+assign H_AD_IO    = H_AD_HIZ     ? AD_IO     : 32'hz;
+assign H_CBE_IO   = H_CBE_HIZ    ? CBE_IO    : 4'hz;
+assign H_PAR_IO   = H_PAR_HIZ    ? PAR_IO    : 1'hz;
+assign H_FRAME_IO = H_FRAME_HIZ  ? FRAME_IO  : 1'hz;
+assign H_TRDY_IO  = H_TRDY_HIZ   ? TRDY_IO   : 1'hz;
+assign H_IRDY_IO  = H_IRDY_HIZ   ? IRDY_IO   : 1'hz;
+assign H_STOP_IO  = H_STOP_HIZ   ? STOP_IO   : 1'hz;
+assign H_DEVSEL_IO= H_DEVSEL_HIZ ? DEVSEL_IO : 1'hz;
+assign H_IDSEL_I  = IDSEL_I;
+assign H_PERR_IO  = H_PERR_HIZ   ? PERR_IO   : 1'hz;
+assign H_SERR_IO  = H_SERR_HIZ   ? SERR_IO   : 1'hz;
+assign H_GNT_I    = GNT_I;
 
 // Reprograming singnals
-//assign rp_cclk = 1'bz;
-assign rp_prog_b = 1'bz;
-assign rp_cs_b = 1'bz;
-assign rp_rdwr_b = 1'b0;
-assign rp_data = 8'bz;
+//assign rp_cclk  = 1'bz;
+assign rp_prog_b  = 1'bz;
+assign rp_cs_b    = 1'bz;
+assign rp_rdwr_b  = 1'b0;
+assign rp_data    = 8'bz;
 assign allow_reprog = 1'bz;
 
 // Switch
-assign h_cpci_id = cpci_id;
-assign LED       = ~LED_Port;
+assign h_cpci_id  = cpci_id;
+assign LED        = ~LED_Port;
+assign H_PASS_READY = pass;
 
 `ifdef DEBUG
 //-----------------------------------
