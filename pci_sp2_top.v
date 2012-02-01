@@ -11,7 +11,7 @@
 
 ***********************************************************************/
 //`define USE_GLOBAL_CLK
-`define ENABLE_EXPROM
+//`define ENABLE_EXPROM
 //`define DEBUG
 
 module pci_sp2_top (
