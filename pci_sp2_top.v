@@ -238,7 +238,7 @@ always @(posedge pclk) begin
 					PCI_IDSel <= IDSEL_I;
 					target_next_state <= TGT_ADDR_COMPARE;
 				end else
-					pass <= H_PASS_REQ;
+					pass <= ~H_PASS_REQ;
 			end
 			TGT_ADDR_COMPARE: begin
 				if (Hit_Device) begin
@@ -554,7 +554,7 @@ assign allow_reprog = 1'bz;
 // Switch
 assign h_cpci_id  = cpci_id;
 assign LED        = ~LED_Port;
-assign H_PASS_READY = pass;
+assign H_PASS_READY = ~pass;
 
 `ifdef DEBUG
 //-----------------------------------
