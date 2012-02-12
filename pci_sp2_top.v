@@ -13,6 +13,7 @@
 //`define USE_GLOBAL_CLK
 //`define ENABLE_EXPROM
 //`define DEBUG
+`define MAGIC_WORD	32'h10dead10
 
 module pci_sp2_top (
 	input         CLK,
@@ -63,6 +64,7 @@ module pci_sp2_top (
 
 	input         H_PASS_REQ,
 	output        H_PASS_READY,
+	input  [31:0] cpci_debug_data,
 
 	output        rp_cclk,		// Reprogramming signals or H_PCLK (Global Clock)
 	output        rp_prog_b,
@@ -238,7 +240,7 @@ always @(posedge pclk) begin
 					PCI_IDSel <= IDSEL_I;
 					target_next_state <= TGT_ADDR_COMPARE;
 				end else
-					pass <= ~H_PASS_REQ;
+					pass <= (~H_PASS_REQ) & cpci_debug_data[31:0] == `MAGIC_WORD;
 			end
 			TGT_ADDR_COMPARE: begin
 				if (Hit_Device) begin
